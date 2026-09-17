@@ -1,0 +1,78 @@
+<?
+/**
+ * eds_constants.php v0.3
+ * -----------------------------------------------------------------------------
+ * Definición de constantes de sistema.
+ * 
+ * Creado: 20100411
+ * Autor:  Paul Monge
+ * 
+ * (c) Copyright 2010, Zairus Online Marketing Consultants
+ */
+
+//Manejo de cadenas
+$EDS_MYSQL_REEMPLAZARQUE = array("'", "'", '"', '"', "\r\n");
+$EDS_MYSQL_REEMPLAZARCON = array('%squot%', '%sq%', '%dquot%', '%dq%', '%enter%');
+$EDS_MSSQL_REEMPLAZARQUE = array("=", "&", "'");
+$EDS_MSSQL_REEMPLAZARCON = array("|eq|", "|amp|", "''");
+$EDS_JSCRIPT_REEMPLAZARQUE = array("'", '"', "\r\n", "\n");
+$EDS_JSCRIPT_REEMPLAZARCON = array("\\'", "\\\"", "\\n", "\\n");
+$EDS_ARCHIVOS_REEMPLAZARQUE = array("\\", "/", " ", '"', "'", "\r\n", "`", "´", "[", "]", ".", ",", ";", "?", "<", ">", "*", "+", "!", "@", "#", "$", "%", "^", "&", "(", ")", "=", "|", "~");
+$EDS_ARCHIVOS_REEPLAZARCON = "";
+$EDS_POSTTOMSSQL_REEMPLAZARQUE = array("\'");
+$EDS_POSTTOMSSQL_REEMPLAZARCON = array("'");
+
+// Optimización de código
+const EDS_OPTIMIZE_JAVASCRIPT = 1;
+const EDS_OPTIMIZE_HTML = 1;
+const EDS_OPTIMIZE_CSS = 1;
+const EDS_OPTIMIZE_SQL = 1;
+
+//Encriptación y transferencia de datos
+$EDS_PVT_KEY = "-----BEGIN RSA PRIVATE KEY-----
+MIICXAIBAAKBgQC4YrXfLuzb7kIX0auWnf0kQBNW5U+2ynpzL8TncPVUlOsrKvKp
+A//nkZYvaWaW37IeJEL9PwNhIRDCxnYMLWxGO2ZGQGBNUSI6P8azuuWWXTOXbcmX
+EJrBeNXysEDhy1vQRRk/8SRHbBpQUbW4aAWtXABn2LkdDmA7nRPk1VHf7wIDAQAB
+AoGAPLS7HlzrvMkn14G/lZo0gt/Zvi1HXm4xfIUItg5Zp1xUROUh+YWIlmw3Xyq7
+jQbfNM9JgulhKnRheU8wBHhcAgBdgPNKXavEJMayzF3rc/q/gvjXmNliCEAP3eGB
+zY/sAFnIxSTmPf9/cI9faPeoH4pqSwl0tU1yDWTNYcbUjdkCQQDgww/ruEPfuXIe
+vtxO/5Wz2aX4VxI58cpjlwBbWxzOLtnrwrRKBcoUEeFvdjx4vsNA9gVrXJXOhl9Y
+7O5uXR4bAkEA0gMS0p4tjpMMaTgeB8a0jGh079Kf+Qtx2waFETDPwNmTUZPHawts
+s3qs8vot+/WFkkrf3Ivq/gjVdS3NK6pSvQJBAM5U45GuV8jTEht9dPukj8ZKIJ3J
+OPcuq3AfV/mFu/zfb7iJxj5J8EfaXkyXi04BOXeyIil8Fh5AptkYsI1qOE8CQB1w
+htv1hodc/7lkP3lxlm+0WOghi4Fa5FwCvvaY9BahqXAfGi5cTKGgScxJ29ZdJZtL
+WbRN/OQdkua5Q/CiELUCQAXcFixo16ZGJNtsokN7vIelCox1Fn6muHd48c5jZaqK
+VJh+wiQe0CI90X85RfCdEyqezNN6HY6BFPZV14CToDA=
+-----END RSA PRIVATE KEY-----";
+
+$EDS_PUB_KEY = "-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC4YrXfLuzb7kIX0auWnf0kQBNW
+5U+2ynpzL8TncPVUlOsrKvKpA//nkZYvaWaW37IeJEL9PwNhIRDCxnYMLWxGO2ZG
+QGBNUSI6P8azuuWWXTOXbcmXEJrBeNXysEDhy1vQRRk/8SRHbBpQUbW4aAWtXABn
+2LkdDmA7nRPk1VHf7wIDAQAB
+-----END PUBLIC KEY-----";
+
+$EDS_PVT_CER = "-----BEGIN CERTIFICATE-----
+MIID0jCCAzugAwIBAgIOSkYAAAACEDSK9fjjodAwDQYJKoZIhvcNAQEEBQAwgbwx
+CzAJBgNVBAYTAkRFMRAwDgYDVQQIEwdIYW1idXJnMRAwDgYDVQQHEwdIYW1idXJn
+MTowOAYDVQQKEzFUQyBUcnVzdENlbnRlciBmb3IgU2VjdXJpdHkgaW4gRGF0YSBO
+ZXR3b3JrcyBHbWJIMSIwIAYDVQQLExlUQyBUcnVzdENlbnRlciBDbGFzcyAwIENB
+MSkwJwYJKoZIhvcNAQkBFhpjZXJ0aWZpY2F0ZUB0cnVzdGNlbnRlci5kZTAeFw0w
+MjA4MjYyMzQ1MjVaFw0wMjA5MjUyMzQ1MjVaMIGLMQswCQYDVQQGEwJERTEaMBgG
+A1UEChMRVEMgVHJ1c3RDZW50ZXIgQUcxHDAaBgNVBAsTE1RDIFRydXN0Q2VudGVy
+IERFTU8xEjAQBgNVBAMTCWxvY2FsaG9zdDEuMCwGCSqGSIb3DQEJARYfd2VibWFz
+dGVyQHZvZ2VsZ2VzYW5nLWJlcmxpbi5kZTCBnzANBgkqhkiG9w0BAQEFAAOBjQAw
+gYkCgYEAuGK13y7s2+5CF9Grlp39JEATVuVPtsp6cy/E53D1VJTrKyryqQP/55GW
+L2lmlt+yHiRC/T8DYSEQwsZ2DC1sRjtmRkBgTVEiOj/Gs7rlll0zl23JlxCawXjV
+8rBA4ctb0EUZP/EkR2waUFG1uGgFrVwAZ9i5HQ5gO50T5NVR3+8CAwEAAaOCAQQw
+ggEAMAwGA1UdEwEB/wQCMAAwDgYDVR0PAQH/BAQDAgXgMD4GCWCGSAGG+EIBCAQx
+Fi9odHRwOi8vd3d3LnRydXN0Y2VudGVyLmRlL2d1aWRlbGluZXMvaW5kZXguaHRt
+bDARBglghkgBhvhCAQEEBAMCBkAwLgYJYIZIAYb4QgENBCEWH1RDIFRydXN0Q2Vu
+dGVyIERlbW8gQ2VydGlmaWNhdGUwXQYJYIZIAYb4QgEDBFAWTmh0dHBzOi8vd3d3
+LnRydXN0Y2VudGVyLmRlL2NnaS1iaW4vY2hlY2stcmV2LmNnaS80QTQ2MDAwMDAw
+MDIxMDM0OEFGNUY4RTNBMUQwPzANBgkqhkiG9w0BAQQFAAOBgQC2ogqx37UV4TLs
+C4NAIMkHWDftueBBZ5WQVYai4wmsbnZ1gsOw7GoCo2hJuw8Jof2dQCRafsi1qHzy
+8tel3WP38R3QX7cyR5ivRdNfy76oZLb+USZZHY5sm6dePH9Cvhab/4FNikhjZ4Vb
+OfELVfhWEisZUtbdSZ/4TEYr9tMK1g==
+-----END CERTIFICATE-----";
+?>
