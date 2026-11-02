@@ -30,7 +30,7 @@ else{
         $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));   
         $_SESSION['empresa_nueva'] =  $nombre;   
         header("Location:".$_SERVER['HTTP_REFERER']);                     
-       // echo "<br><b>Se guardó con exito:</b><br><br>"."$nombre <br>"; 
+       // echo "<br><b>Se guardï¿½ con exito:</b><br><br>"."$nombre <br>"; 
        // (die);
        ?>
      
