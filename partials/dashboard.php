@@ -1,25 +1,3 @@
-<script>
-  function redireccion($trn_id) {
-    var trn_id = $trn_id;
-    var print_d = '<?php echo "\app.php?trn_id=" ?>' + trn_id;
-    window.location.href = print_d;
-  }
-
-  function expo($u_id, $fecha_ini, $fechafinal, $empleado, $unidad_mina_sel) {
-    var hoy = $fecha_ini;
-    var fecha_fin = $fechafinal;
-    var mina = $unidad_mina_sel;
-    var empleado = $empleado;
-    var u_id = $u_id;
-    alert(hoy);
-
-    var cadena = u_id + '&hoy=' + hoy + '&fecha_final=' + fecha_fin + '&empleado=' + empleado + '&unidad=' + mina;
-    var print_d = '<?php echo "https://heliostarvisit.com/visitas_export.php?u_id=" ?>' + cadena;
-    //alert(print_d);
-    window.location.href = print_d;
-  }
-</script>
-
 <style type="text/css">
   .btnSubmit {
     width: 50%;
@@ -43,10 +21,12 @@
   }
 </style>
 <?php
+include "config/Env.php";
+Env::load(dirname(__DIR__) . '/.env');
 
 if (($_SESSION['LoggedIn']) <> '') {
   $u_id = $_SESSION['u_id'];
-  $unidad_mina_sel = $_GET['unidad'] ?? null;
+  $unidad_mina_sel = $_GET['unidad'] ?? 0;
   $vig  = $_SESSION['empleado'];
   //echo $vig;
   $vigilancia = $mysqli->query("SELECT (CASE WHEN division = 'vigilante' THEN 1 ELSE 0 END) AS tipo_user FROM arg_usuarios WHERE u_id = ".$u_id) or die(mysqli_error($mysqli));             
@@ -242,16 +222,13 @@ if (($_SESSION['LoggedIn']) <> '') {
         $fecha_ini = $hoy;
       }
 
-      $dia_final = date(t, strtotime($hoy));
+      $dia_final = date('t', strtotime($hoy));
       if ($mes_sel <= 9) {
         $fechafinal = $ano_actual . '-0' . $mes_sel . '-' . $dia_final;
       } else {
         $fechafinal = $ano_actual . '-' . $mes_sel . '-' . $dia_final;
       }
     }
-    //var_dump("CALL visor_visitas (" . $u_id . ",'" . $hoy . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", 0" . ")");
-    //En visitas abiertas muestra todos los estados
-    //echo 'va'.$empleado;
     mysqli_multi_query($mysqli, "CALL visor_visitas (" . $u_id . ",'" . $hoy . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", 0" . ")") or die(mysqli_error($mysqli));
 
   ?>
@@ -345,17 +322,14 @@ if (($_SESSION['LoggedIn']) <> '') {
 
               <div class="col-md-3 col-lg-3">
                 <br />
-                <?php  if ($motivotop == "")
-                  $motivot = "Estado Visita";
-
-                echo ("<select name=\"estado\" id=\"estado\" class=\"form-control\" > ");
-                //echo ("<option value=$nomtop>$motivot</option>");
-                while ($row = $datos_estados->fetch_array(MYSQLI_ASSOC)) {
-                  $actividad = ($row["estado"]);
-                  $act_id = $row["estado_id"];
-                  echo ("<option value=$act_id>$actividad</option>");
-                }
-                echo ("</select><br />");
+                <?php
+                  echo ("<select name=\"estado\" id=\"estado\" class=\"form-control\" > ");
+                  while ($row = $datos_estados->fetch_array(MYSQLI_ASSOC)) {
+                    $actividad = ($row["estado"]);
+                    $act_id = $row["estado_id"];
+                    echo ("<option value=$act_id>$actividad</option>");
+                  }
+                  echo ("</select><br />");
                 ?>
               </div>
               <br />
@@ -382,6 +356,8 @@ if (($_SESSION['LoggedIn']) <> '') {
     </div>
     <div class="row">
       <?php 
+      $html_en = "";
+
       if ($tipo != 10) {
         $html_en = "<table class='table table-striped' style='font-size:13px' id='encabezado'>
                       <thead>
@@ -457,11 +433,28 @@ if (($_SESSION['LoggedIn']) <> '') {
       }
 
       $html_en .= "</tbody></table>";
-      //$mysqli->set_charset("utf8");
-      echo utf8_decode("$html_en");
+      echo "$html_en";
       ?>
     </div>
   </div>
 <?php 
 }
 ?>
+<script>
+  function redireccion($trn_id) {
+    var trn_id = $trn_id;
+    var print_d = '<?php echo "\app.php?trn_id=" ?>' + trn_id;
+    window.location.href = print_d;
+  }
+
+  function expo($u_id, $fecha_ini, $fechafinal, $empleado, $unidad_mina_sel) {
+    var hoy = $fecha_ini;
+    var fecha_fin = $fechafinal;
+    var mina = $unidad_mina_sel;
+    var empleado = $empleado;
+    var u_id = $u_id;
+    var cadena = u_id + '&hoy=' + hoy + '&fecha_final=' + fecha_fin + '&empleado=' + empleado + '&unidad=' + mina;
+    var print_d = '<?php echo Env::get('APP_URL') ."visitas_export.php?u_id=" ?>' + cadena;
+    window.location.href = print_d;
+  }
+</script>
