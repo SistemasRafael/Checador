@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 $html='';
 $org_id  = $_POST['org_id'];

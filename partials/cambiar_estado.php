@@ -17,7 +17,7 @@ require 'librerias/PHPMailer.php';
 require 'librerias/SMTP.php';
 require 'librerias/Exception.php';
 
-include "connections/config.php";
+include "config/config.php";
 $trn_id = $_GET['trn_id'];
 $estado_id = $_GET['estado_id'];
 $unidad_id = $_SESSION['unidad_id'];

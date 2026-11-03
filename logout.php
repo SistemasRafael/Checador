@@ -1,5 +1,5 @@
 <?php 
-    include "connections/config.php"; 
+    include "config/config.php"; 
     $_SESSION = array(); 
     session_destroy();
 ?>

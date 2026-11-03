@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 $org_id = $_SESSION['org_id'];
 
 if ($org_id == 0) {

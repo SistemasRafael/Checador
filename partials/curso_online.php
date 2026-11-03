@@ -51,7 +51,7 @@
     </style>
     
     <?php 
-    include "connections/config.php";
+    include "config/config.php";
     $curso_id = $_GET['curso_id'];
     $u = $_SESSION['u_id'];
     $hoy = date("Ymd");
@@ -219,14 +219,14 @@
                     <div class="col-md-10 col-lg-12">
                         <button type="button" class="acciones fa fa-sharp fa-solid fa-barcode" id="stickerLC" name="stickerLC" onclick="print_sticker(<?php  echo $curso_id ?>,<?php  echo $u ?>,<?php  echo $hoy ?>,<?php  echo $valido_lc ?>)"></button>
                     </div>
-                    <embed src="partials\INDUCCION_DE_SEGURIDAD_2022.pdf" width="600" height="500" type="application/pdf">
+                    <embed src="assets\pdfs\INDUCCION_DE_SEGURIDAD_2022.pdf" width="600" height="500" type="application/pdf">
                     <div class="float-left">
                         <div id="evaluarLC" class="col-md-16 col-lg-12">
                             <button type="button" class="acciones fa fa-edit" data-toggle="modal" data-target="#evaluaModal" id="evaluarLaCol" name="evaluarLaCol" href="partials\evaluar.php?curso_id=<?php  echo $curso_id; ?>&examen_id=6"></button>
                         </div>
                     </div>
                     <video width=500 height=400 controls poster="vistaprevia.jpg">
-                        <source src="partials\Argonaut_LC_seguridad.mp4" type="video/mp4">
+                        <source src="upload\Videos\Argonaut_LC_seguridad.mp4" type="video/mp4">
                     </video>
                     <br />
                 <?php  }
@@ -377,7 +377,7 @@
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
 
-                    <embed src="partials\Inducción_de_Seguridad_Industrial_EC.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\Inducción_de_Seguridad_Industrial_EC.pdf" frameborder="0" width="100%" height="1000px">
 
                 </div>
             </div>

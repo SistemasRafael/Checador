@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 //set_include_path(get_include_path() . PATH_SEPARATOR . "/xampp/htdocs/registro/dompdf");
 require_once 'images/dompdf/autoload.inc.php';
 use Dompdf\Dompdf;

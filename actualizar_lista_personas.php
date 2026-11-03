@@ -4,7 +4,7 @@ use Dompdf\FrameDecorator\TableRow;
 use Dompdf\Positioner\TableRow as PositionerTableRow;
 use LDAP\Result;
 
-include "connections/config.php";
+include "config/config.php";
 
 $mysqli -> set_charset("utf8");
 $html_en = '';

@@ -1,5 +1,5 @@
 <?php 
-  include "connections/config.php"; 
+  include "config/config.php"; 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en">
@@ -182,21 +182,21 @@
         <div class="modal fade" id="pdfEtica" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\CODIGO DE CONDUCTA Y ETICA EMPRESARIAL PARA PROVEEDORES HSTM.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\CODIGO DE CONDUCTA Y ETICA EMPRESARIAL PARA PROVEEDORES HSTM.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
          </div>
           <div class="modal fade" id="pdfManualUsuarioProv" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\Manual de Usuario SISTEMA BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\Manual de Usuario SISTEMA BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
         </div>
         <div class="modal fade" id="pdfManualUsuarioEmp" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\Manual de usuario (empleado) BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\Manual de usuario (empleado) BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
         </div>

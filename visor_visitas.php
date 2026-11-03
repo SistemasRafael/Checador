@@ -27,7 +27,7 @@
   }
 </style>
 <?php 
-include "connections/config.php";
+include "config/config.php";
 $_SESSION['LoggedIn'] = 1; 
 
 if(($_SESSION['LoggedIn']) <> '') { ?>

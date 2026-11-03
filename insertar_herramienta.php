@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nombre  = $mysqli->real_escape_string($_POST['nombre'] ?? '');

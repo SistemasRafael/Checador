@@ -178,7 +178,7 @@
         border-radius: 4px;
     }
 </style>
-<?php include "connections/config.php";
+<?php include "config/config.php";
 
 if (isset($_GET['trn_id'])) {
     session_start();

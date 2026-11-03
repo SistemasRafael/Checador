@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 $html='';
 
 $respuesta_sele   = $_POST['respu_sel'];

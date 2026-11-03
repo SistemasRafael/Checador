@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 $html = '';
 $usuario_actu = $_POST['usuario_actualiza'];

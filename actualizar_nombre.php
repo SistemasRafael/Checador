@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 $nombre = $_POST['nombre'];
 $email = $_POST['email'];

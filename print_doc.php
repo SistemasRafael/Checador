@@ -1,5 +1,5 @@
 <?php 
-include "connections/config.php";
+include "config/config.php";
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Dompdf\Dompdf;

@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 $html = '';
 $unidad_id  = $_POST['unidad_id'];

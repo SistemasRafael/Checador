@@ -1,5 +1,5 @@
 <?php
-include "connections/config.php";
+include "config/config.php";
 
 $pass = md5($_POST['pass']);
 $id = $_POST['id'];

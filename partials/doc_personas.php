@@ -62,7 +62,7 @@
             }      
 </script>
 <?php
-include "connections/config.php";
+include "config/config.php";
 include "config/Env.php";
 Env::load(dirname(__DIR__) . '/.env');
 
