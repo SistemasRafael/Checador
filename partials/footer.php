@@ -65,7 +65,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-10 footer-brand animated fadeInCenter">
-                        <img src="images/logo_todos.png" style="max-width: 100%; height: auto;"> <br>
+                        <img src="assets/images/logo_todos.png" style="max-width: 100%; height: auto;"> <br>
                         <section style="text-align:center; margin:10px auto;"><p>Designed by <a href="#">IT 2022</a></p></section>
                         <div class="container">
                             <br>
