@@ -14,9 +14,9 @@
   <meta name="author" content="Argonaut Gold">
   <meta name="viewport" content="width=device-width, initial-scale=1">
     
-  <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css"/>
-  <script type="text/javascript" src="js/jquery.min.js"></script>
-  <script type="text/javascript" src="js/bootstrap.min.js"></script> 
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css"/>
+  <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"></script> 
   <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">  
@@ -212,7 +212,7 @@
       }
     ?>
     <a class="navbar-brand logos" href="dashboard.php?tipo=1&unidad=<?php  echo $unidad_mina_sel; ?>">
-      <img src="images/argonaut-logo2.jpg" alt="ArgonautGold Logo">
+      <img src="assets/images/argonaut-logo2.jpg" alt="ArgonautGold Logo">
     </a>
     <div class="col md-2 lg- "></div>
     <div class="col md-2 lg-2">

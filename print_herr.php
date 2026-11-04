@@ -147,7 +147,7 @@ $par_y = 5;
 $ifactor = 220 / 950;
 $iwidth = 200;
 $pdf_header .= '<CXY X="0" Y="3"></CXY>';
-$pdf_header .= '<img width="120" height="80" align="left" src="images/argonaut-logo2.jpg">'.'<br />'.'<br />'.'<br />';
+$pdf_header .= '<img width="120" height="80" align="left" src="assets/images/argonaut-logo2.jpg">'.'<br />'.'<br />'.'<br />';
 $pdf_header .= '<CXY X="0" Y="15"></CXY>';
 $pdf_header .= '<cfs FONTSIZE="3"></cfs>';
 $pdf_header .= 'RESGUARDO PROVISIONAL';

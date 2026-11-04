@@ -239,7 +239,7 @@ QRcode::PNG($cod,$dir,'H',2,0);
 $ifactor = 220 / 900;
 $iwidth = 800;
 $pdf_header .= "<CXY X='15' Y='15'></CXY>";
-$pdf_header .= '<img width="' . (floor($iwidth * $img_factor)) . '" height="' . (floor(($iwidth * $ifactor) * $img_factor)) . '" src="images/encabezado_visita.jpg">';
+$pdf_header .= '<img width="' . (floor($iwidth * $img_factor)) . '" height="' . (floor(($iwidth * $ifactor) * $img_factor)) . '" src="assets/images/encabezado_visita.jpg">';
 $pdf_header .= '<cfs FONTSIZE="5"></cfs>';
 $pdf_header .= '<CXY X="' . $par_x . '" Y="' . ($par_y + 35) . '"></CXY>';
 $section_html = '<strong>Nombre: </strong>'.$empresa['nombre'].'<br />';

@@ -36,7 +36,7 @@ body {
       }
     #tabsG a {
       float:left;
-      background:url("../images/tableftG.gif") no-repeat left top;
+      background:url("../assets/images/tableftG.gif") no-repeat left top;
       margin:0;
       padding:0 0 0 4px;
       text-decoration:none;
@@ -44,7 +44,7 @@ body {
     #tabsG a span {
       float:left;
       display:block;
-      background:url("../images/tabrightG.gif") no-repeat right top;
+      background:url("../assets/images/tabrightG.gif") no-repeat right top;
       padding:15px;
       color:#ffffff;
       font-size: 15px;
