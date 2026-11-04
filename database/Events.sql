@@ -1,0 +1,2 @@
+DROP EVENT IF EXISTS llenarTablaNot;
+CREATE DEFINER=```root```@```localhost``` EVENT `llenarTablaNot` ON SCHEDULE EVERY 1 DAY STARTS '2023-09-22 11:20:08' ENDS '2033-01-31 12:53:08' ON COMPLETION NOT PRESERVE ENABLE DO CALL arg_prc_llenarTablaNotificaciones

@@ -1,10 +1,11 @@
-<?php
-  include "connections/config.php";
-  $_SESSION['unidad_sel'] = $_GET['unidad'] ?? ''; 
-  $userId = $_SESSION['u_id'] ?? 0;
+<?php 
+  include "config/config.php"; 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html lang="en">
+<?php
+  $_SESSION['unidad_sel'] = $_GET['unidad'] ?? ''; 
+?>
 <head>
   <meta charset="UTF-8">
   <title>HelioStarVisit</title>
@@ -12,17 +13,20 @@
   <meta name="description" content="">
   <meta name="author" content="Argonaut Gold">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css"/>
-  <script type="text/javascript" src="js/jquery.min.js"></script>
-  <script type="text/javascript" src="js/bootstrap.min.js"></script> 
+    
+  <!-- <link rel="stylesheet" href="assets/css/bootstrap.min.css" type="text/css"/> -->
+  <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+  <script type="text/javascript" src="assets/js/bootstrap.min.js"></script> 
   <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">  
+    
   <script src="//code.jquery.com/jquery-1.11.0.min.js"></script> 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
   <style type="text/css">
     body {
       padding-bottom: 20px;
@@ -77,7 +81,7 @@
         <li class="nav-item">
           <a class="text-muted" href="https://www.heliostarmetals.com" target="_blank">Aviso de Privacidad</a>
         </li>
-         <li class="nav-item">
+        <li class="nav-item">
           <a class="text-muted" data-toggle="modal" data-target="#pdfManualUsuarioProv" name="Manual">Manual Proveedores</a>
         </li>
         <li class="nav-item">
@@ -86,45 +90,38 @@
         <li class="nav-item">
           <a class="text-muted" data-toggle="modal" data-target="#pdfEtica" name="Etica">Código de Ética Proveedores</a>
         </li>
-        
-
-        <?php if (isset($_SESSION['LoggedIn']) && $_SESSION['LoggedIn'] == 1) {
-            
+        <?php 
+          if (isset($_SESSION['LoggedIn']) && $_SESSION['LoggedIn'] == 1) {
             $cat_usuarios = $mysqli->query("SELECT count(*) AS cat
-                            FROM arg_usuarios_directivas
-                            WHERE directiva_id = 3 AND u_id = $userId") or die(mysqli_error($mysqli));
+                                            FROM arg_usuarios_directivas
+                                            WHERE directiva_id = 3 AND u_id = ".$_SESSION['u_id']) or die(mysqli_error($mysqli));
+            $cat_us = $cat_usuarios->fetch_array(MYSQLI_ASSOC);
+            $cat_user = $cat_us['cat'];
 
-                      $cat_us = $cat_usuarios->fetch_array(MYSQLI_ASSOC);
-                      $cat_user = $cat_us['cat'];
-            
-            if ($cat_user <> 0) {?>
+            if ($cat_user <> 0) {
+        ?>
             <li class="nav-item" >
               <a class="nav-link"   href="usuarios.php">Catalogo de Usuarios</a>
             </li>
-   <?php     }
-        
-             
-$stic = $mysqli->query("SELECT count(*) AS permiso
-                            FROM arg_usuarios_directivas
-                            WHERE directiva_id = 2 AND u_id = $userId") or die(mysqli_error($mysqli));
+        <?php }
+          $stic = $mysqli->query("SELECT count(*) AS permiso
+                                FROM arg_usuarios_directivas
+                                WHERE directiva_id = 2 AND u_id = ".$_SESSION['u_id']) or die(mysqli_error($mysqli));
 
-                      $sticker = $stic->fetch_array(MYSQLI_ASSOC);
-                      $asigna_sticker = $sticker['permiso'];
+          $sticker = $stic->fetch_array(MYSQLI_ASSOC);
+          $asigna_sticker = $sticker['permiso'];
         ?>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Hola <?php  echo $_SESSION['nombre'] ?></a>
-            <div class="dropdown-menu">
-              <a class="dropdown-item" href="mi_cuenta.php">Mi cuenta</a>
-             
-             <?php if ($asigna_sticker == 1){?> 
-              <a class="dropdown-item" href="sticker_manual.php?u_id=<?php echo $userId?>&unidad=<?php echo $_SESSION['unidad_sel'];?>">Asignar STICKER</a>
-              <?php }?> 
-              <a class="dropdown-item" href="visor_visitas.php">Mis Visitas</a>
-              <a class="dropdown-item" href="#">Mis Cursos</a>
-              <a class="dropdown-item" href="logout.php">Cerra sesión</a>
-          </li>
-
-        
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#">Hola <?php  echo $_SESSION['nombre'] ?></a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="mi_cuenta.php">Mi cuenta</a>
+            <?php if ($asigna_sticker == 1) {?> 
+              <a class="dropdown-item" href="sticker_manual.php?u_id=<?php echo $_SESSION['u_id']?>&unidad=<?php echo $_SESSION['unidad_sel'];?>">Asignar STICKER</a>
+            <?php }?> 
+            <a class="dropdown-item" href="visor_visitas.php">Mis Visitas</a>
+            <a class="dropdown-item" href="#">Mis Cursos</a>
+            <a class="dropdown-item" href="logout.php">Cerra sesión</a>
+        </li>
 
           <?php  if ($_SESSION['empleado'] == 1) { ?>
             <div class="col md-1 lg-1">
@@ -180,25 +177,26 @@ $stic = $mysqli->query("SELECT count(*) AS permiso
                 }
                 ?>
             </li>
-        <?php } } ?>
+        <?php  }
+        } ?>
         <div class="modal fade" id="pdfEtica" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\CODIGO DE CONDUCTA Y ETICA EMPRESARIAL PARA PROVEEDORES HSTM.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\CODIGO DE CONDUCTA Y ETICA EMPRESARIAL PARA PROVEEDORES HSTM.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
          </div>
           <div class="modal fade" id="pdfManualUsuarioProv" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\Manual de Usuario SISTEMA BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\Manual de Usuario SISTEMA BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
         </div>
         <div class="modal fade" id="pdfManualUsuarioEmp" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
                 <div class="modal-content">
-                    <embed src=".\Manual de usuario (empleado) BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
+                    <embed src="assets\pdfs\Manual de usuario (empleado) BITACORA DE VISITAS ARGONAUT GOLD.pdf" frameborder="0" width="100%" height="1000px">
                 </div>
             </div>
         </div>
@@ -207,16 +205,16 @@ $stic = $mysqli->query("SELECT count(*) AS permiso
     </div>
   </div>
   <nav class="navbar navbar-expand-xl navbar-dark bg-white">
-    <?php
+    <?php  
       $unidad_mina_sel = $_GET['unidad'] ?? '';
       if ($unidad_mina_sel == '') {
         $unidad_mina_sel = $_SESSION['unidad_def'] ?? '';
       }
     ?>
     <a class="navbar-brand logos" href="dashboard.php?tipo=1&unidad=<?php  echo $unidad_mina_sel; ?>">
-      <img src="images/argonaut-logo2.jpg" alt="ArgonautGold Logo">
+      <img src="assets/images/argonaut-logo2.jpg" alt="ArgonautGold Logo">
     </a>
-    <div class="col md-2 lg- "> </div>
+    <div class="col md-2 lg- "></div>
     <div class="col md-2 lg-2">
       <h1><?php  echo ' ' . ($_SESSION['empresa'] ?? '') ?></h1>
     </div>
