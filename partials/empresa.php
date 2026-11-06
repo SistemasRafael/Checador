@@ -128,7 +128,7 @@ if (($_SESSION['LoggedIn']) == 1) {
     
     $nombre = $mysqli->query("SELECT nombre FROM arg_organizaciones WHERE org_id = " . $org_id);
     $row_diu = $nombre->fetch_array(MYSQLI_ASSOC);
-    $empresa = $row_diu['nombre'];
+    $empresa = $row_diu['nombre'] ?? '';
 ?>
 
 <!-- Modal empresa  -->
