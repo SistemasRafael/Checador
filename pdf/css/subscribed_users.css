@@ -1,0 +1,48 @@
+@page {
+    margin-top: 120px;
+    margin-bottom: 40px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#header {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    right: 0;
+    height: 100px;
+    text-align: center;
+}
+
+#content {
+    margin-top: 20px;
+}
+body {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#motivos {
+    width: 100%;
+}
+
+h4 {
+    margin: 5px 0 0 0;
+}
+
+th {
+    padding: 0 5px;
+}
+
+td {
+    padding: 0 5px;
+}
+
+table, th, td {
+    border: 2px solid black;
+}

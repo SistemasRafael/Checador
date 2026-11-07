@@ -1,0 +1,44 @@
+html, body, table { 
+    font-family: helvetica; 
+    font-size: 100%; 
+}
+
+h1 {
+    color: #003366;
+}
+
+table, th, td {
+    border: 1px solid #000;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+th, td {
+    padding: 8px;
+}
+
+.backgroud-color {
+    background-color: gray;
+}
+
+@page {
+    margin-top: 20px;
+    margin-bottom: 120px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+#footer {
+    position: fixed;
+    bottom: -60px;
+    left: 0;
+    right: 0;
+    height: 80px;
+}
+
+#header1{
+    width:100%;
+    margin-bottom:5px;
+}
