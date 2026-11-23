@@ -8,25 +8,91 @@
     $trn_id_rel = $_POST['trn_id'] ?? '';
     date_default_timezone_set('America/Phoenix');
 
-    function enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id) {
-        $mail = new PHPMailer();
-        $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
-        $mail->FromName = "Bitacora de Visitas MineData-Access de HelioStarMetals";
-        $mail->Subject = "Envio desde Bitacora de Visitas MineData-Access HelioStarMetals";			
-        $mail->AddBCC("".$atiende_correo."");
-        $mail->SMTPOptions = array('ssl' => array(
-                                        'verify_peer' => FALSE,
-                                        'verify_peer_name' => FALSE,
-                                        'allow_self_signed' => TRUE
-                                    )); 
+    // function enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id)
+    // {
+    //     try {
+    //         $mail = new PHPMailer(true); // <- habilita excepciones
 
-        $mail->ContentType = "text/html";
-        $body = "Has recibido una solicitud de visita con folio <strong>".$folio."</strong> del proveedor <strong>".$proveedor."</strong> empresa <strong>".$empresa."</strong> con fecha <strong>".$fecha."</strong><br>";
-        $body .= "<br>Para ver mas detalles favor de ingresar a la bitácora de visitas:<br><br>";
-        $body .= " <font color='red'>http://heliostarvisit.com/print_doc.php?trn_id=</font>".$trn_id."<br><br>";
-        $body .= "Atte: MineData-Access Control de Acceso de HelioStar Metals";
-        $mail->Body = $body;
-        $mail->Send();
+    //         $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
+    //         $mail->FromName = "Bitacora de Visitas MineData-Access de HelioStarMetals";
+    //         $mail->Subject = "Envio desde Bitacora de Visitas MineData-Access HelioStarMetals";
+
+    //         // $mail->AddBCC($atiende_correo);
+    //         $mail->AddBCC("rafael.flores@heliostarmetals.com");
+
+    //         $mail->SMTPOptions = [
+    //             'ssl' => [
+    //                 'verify_peer' => false,
+    //                 'verify_peer_name' => false,
+    //                 'allow_self_signed' => true
+    //             ]
+    //         ];
+
+    //         $mail->ContentType = "text/html";
+
+    //         $body = "Has recibido una solicitud de visita con folio <strong>{$folio}</strong> del proveedor <strong>{$proveedor}</strong> empresa <strong>{$empresa}</strong> con fecha <strong>{$fecha}</strong><br>";
+    //         $body .= "<br>Para ver mas detalles favor de ingresar a la bitácora de visitas:<br><br>";
+    //         $body .= "<font color='red'><a href='http://heliostarvisit.com/print_doc.php?trn_id={$trn_id}' target='_blank'>Ver solicitud</a></font><br><br>";
+    //         $body .= "Atte: MineData-Access Control de Acceso de HelioStar Metals";
+
+    //         $mail->Body = $body;
+    //         $mail->SMTPDebug = 3;
+    //         $mail->Debugoutput = 'html';
+
+    //         echo '<pre>';
+    //         echo 'Mailer: ' . $mail->Mailer;
+    //         echo '</pre>';
+    //         die();
+
+    //         $mail->send();
+
+    //         return [
+    //             'success' => true,
+    //             'message' => 'Correo enviado correctamente.'
+    //         ];
+
+    //     } catch (Exception $e) {
+    //         error_log("PHPMailer Error: " . $mail->ErrorInfo);
+
+    //         return [
+    //             'success' => false,
+    //             'message' => $mail->ErrorInfo,
+    //             'exception' => $e->getMessage()
+    //         ];
+    //     }
+    // }
+
+    function enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id) {
+        try {
+            $mail = new PHPMailer();
+            $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
+            $mail->FromName = "Bitacora de Visitas MineData-Access de HelioStarMetals";
+            $mail->Subject = "Envio desde Bitacora de Visitas MineData-Access HelioStarMetals";			
+            $mail->AddBCC("".$atiende_correo."");
+            //$mail->AddBCC("rafael.flores@heliostarmetals.com");
+            $mail->SMTPOptions = array('ssl' => array(
+                                            'verify_peer' => FALSE,
+                                            'verify_peer_name' => FALSE,
+                                            'allow_self_signed' => TRUE
+                                        )); 
+
+            $mail->ContentType = "text/html";
+            $body = "Has recibido una solicitud de visita con folio <strong>".$folio."</strong> del proveedor <strong>".$proveedor."</strong> empresa <strong>".$empresa."</strong> con fecha <strong>".$fecha."</strong><br>";
+            $body .= "<br>Para ver mas detalles favor de ingresar a la bitácora de visitas:<br><br>";
+            $body .= " <font color='red'>http://heliostarvisit.com/print_doc.php?trn_id=</font>".$trn_id."<br><br>";
+            $body .= "Atte: MineData-Access Control de Acceso de HelioStar Metals";
+            $mail->Body = $body;
+            $mail->Send();
+        } 
+        catch (Exception $e) {
+            error_log("PHPMailer Error: " . $mail->ErrorInfo);
+
+            return [
+                'success' => false,
+                'message' => $mail->ErrorInfo,
+                'exception' => $e->getMessage()
+            ];
+        }
     }
 
     if(isset($_POST['subir_poliza'])) {

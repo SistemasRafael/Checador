@@ -2,13 +2,13 @@
 require_once __DIR__ . '/vendor/autoload.php';
 
 include "config/config.php";
-include "pdf/templates/ToolTemplate.php";
+include "pdf/templates/ToolsTemplate.php";
 include "pdf/generators/PdfGenerator.php";
 include "repositories/ToolRepository.php";
 
 if (isset($_GET['trn_id'])){
     $trn_id_rel = $_GET['trn_id'];
-
+    
     $repository = new ToolRepository($mysqli);
     $template = new ToolsTemplate([
         'empresa'      => $repository->getEmpresa($trn_id_rel),

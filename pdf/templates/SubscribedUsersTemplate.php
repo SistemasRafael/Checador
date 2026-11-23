@@ -1,34 +1,47 @@
 <?php
-
 require_once __DIR__ . '/../contracts/PdfTemplateInterface.php';
-include "config/Env.php";
+require_once __DIR__ . '/../../utilities/ImageHelper.php';
 
 class SubscribedUsersTemplate implements PdfTemplateInterface
 {
     private array $data;
+    private string $viewsPath;
+    private string $cssPath;
 
     public function __construct(array $data)
     {
         $this->data = $data;
+        $this->viewsPath = __DIR__ . '/../views/SubscribedUser/';
+        $this->cssPath = __DIR__ . '/../css/subscribed_users.css';
     }
 
     public function render(): string
     {
+        $imageBase64 = ImageHelper::convertImageToBase64(ImageHelper::getCompanyIconPath());
+
         $viewData = $this->data;
-
-        Env::load(__DIR__ . '/../../.env');
+        $viewData['imageBase64'] = $imageBase64;
 
         ob_start();
-        include "pdf/views/SubscribedUser/header.php";
+        include $this->viewsPath . 'header.php';
         $header = ob_get_clean();
-
+        
         ob_start();
-        include "pdf/views/SubscribedUser/content.php";
+        include $this->viewsPath . 'content.php';
         $content = ob_get_clean();
+        
+        if (!is_readable($this->cssPath)) {
+            throw new Exception('CSS file not found or unreadable: ' . $this->cssPath);
+        }
 
-        $css = file_get_contents(__DIR__ . '/../css/subscribed_users.css');
+        $css = file_get_contents($this->cssPath);
+
+        if ($css === false) {
+            throw new Exception('Error reading CSS file: ' . $this->cssPath);
+        }
 
         return <<<HTML
+            <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">

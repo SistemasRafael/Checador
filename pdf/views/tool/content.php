@@ -2,7 +2,8 @@
 /** @var array{
  *   empresa: array,
  *   entrada: array,
- *   herramientas: array
+ *   herramientas: array,
+ *   imageBase64: string
  * } $viewData
  */
 ?>
