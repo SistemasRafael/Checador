@@ -1,5 +1,5 @@
 <div class="email-header">
-    <h2>
-        HelioStar Metals
-    </h2>
+    <h3>
+        Heliostar Visit
+    </h3>
 </div>
