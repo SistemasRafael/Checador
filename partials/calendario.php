@@ -323,7 +323,7 @@ date_default_timezone_set("America/Phoenix");
           <div class="modal-body">
             <div class="text-center">
                 <h4>Se está realizando la inscripción por favor espere...</h4>
-                <input type="hidden" id="mina_prep" size=20 style="width:125px; color:#996633" value="<?php echo $unidad_id;?>" disabled />        
+                <input type="hidden" id="mina_prep" size=20 style="width:125px; color:#996633" value="" disabled />        
                 <img  src="images\upload.gif">          
             </div>
           </div>

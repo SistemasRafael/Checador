@@ -1,18 +1,19 @@
 <?php
 include "config/config.php";
+require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/config/Env.php';
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'librerias/PHPMailer.php';
-require 'librerias/SMTP.php';
-require 'librerias/Exception.php';
+require_once __DIR__ . '/mail/MailService.php';
+require_once __DIR__ . '/mail/providers/PHPMailerProvider.php';
+require_once __DIR__ . '/mail/templates/SuscriptionDataEmail.php';
 
 $html = '';
 $u_id = $_POST['u_id'];
 $fecha = $_POST['fecha'];
 $existe = $_POST['existe'];
 $unidad_mina = $_POST['mina_sel'];
+$path = __DIR__ . '/.env';
+Env::load(__DIR__ . '/.env');
 
 $max_trn = $mysqli->query("SELECT MAX(trn_id) AS trn_id FROM arg_calendario_usuarios") or die(mysqli_error($mysqli));
 $max = $max_trn->fetch_array(MYSQLI_ASSOC);
@@ -38,6 +39,9 @@ else {
     $dia = str_pad(date("d", strtotime($fecha)), 2, "0", STR_PAD_LEFT);
     $m = date("m", strtotime($fecha));
     $y = date("Y", strtotime($fecha));
+    $dia_letra = '';
+    $max_participantes = 0;
+
     if($unidad_mina == 1){
         $dia_letra = 'Lunes';
         $max_participantes = 20;
@@ -56,7 +60,8 @@ else {
                 VALUES ($unidad_mina, $cal_id, '$dia_letra', $dia, $m, $y, '$y-$m-$dia', $max_participantes)";
         $mysqli->query($query);
         
-        $query = "INSERT INTO arg_calendario_usuarios (trn_id, u_id, cal_id, tipo_induccion, fecha)"."VALUES ($trn_id, $u_id, $cal_id, 1, '$y-$m-$dia')";
+        $query = "INSERT INTO arg_calendario_usuarios (trn_id, u_id, cal_id, tipo_induccion, fecha)
+                VALUES ($trn_id, $u_id, $cal_id, 1, '$y-$m-$dia')";
         $mysqli->query($query);
         
     }
@@ -82,54 +87,46 @@ if ($resultado->num_rows > 0) {
     $proveedor_sol = $datos_in['nombre'];
     $empresa_sol = $datos_in['empresa'];
     $fecha_cur = $datos_in['fecha'];
-    $email_pr = $datos_in['email'];
-    
-    $mail = new PHPMailer();
-    $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
-    $mail->FromName = "Bitacora de Registro";
-    $mail->Subject = "Envio desde Bitacora de Registro de Argonaut Gold INC.";
-    $copy_d = 'danira.romero@argonautgold.com';
-    $mail->SMTPOptions = array('ssl' => array(
-                                    'verify_peer' => FALSE,
-                                    'verify_peer_name' => FALSE,
-                                    'allow_self_signed' => TRUE
-                            ));
-    
-    if($unidad_mina == 1) {
-        $medico_unidad = 'julio.esquer@argonautgold.com';
-        $mail->AddBCC("" . $medico_unidad . "");
-        $mail->AddBCC("" . $copy_d . "");
+
+    $to = [
+        $datos_in['email'], 
+        'Lizbeth.Gonzalez@heliostarmetals.com'
+    ];
+
+    $cc = ['rafael.flores@heliostarmetals.com'];
+
+    if ($unidad_mina == 1) {
+        $cc[] = 'julio.esquer@heliostarmetals.com';
     }
 
-    if($unidad_mina == 2) {        
-        $medico_unidad = 'Medico.SanAgustin@argonautgold.com';
-        $copy_j = 'juan.meneses@argonautgold.com';
-        $mail->AddBCC("" . $medico_unidad . "");
-        $mail->AddBCC("" . $copy_d . "");
-        $mail->AddBCC("" . $copy_j . "");
+    if ($unidad_mina == 2) {
+        $cc[] = 'Medico.SanAgustin@heliostarmetals.com';
+        $cc[] = 'juan.meneses@heliostarmetals.com';
     }
 
-    if($unidad_mina == 3) {         
-        $medico_unidad  = 'Omar.delgado@argonautgold.com';
-        $medico2_unidad = 'Rigoberto.Villa@argonautgold.com';
-        $copy_j         = 'juan.meneses@argonautgold.com';
-        $mail->AddBCC("" . $medico_unidad . "");
-        $mail->AddBCC("" . $medico2_unidad . "");
-        $mail->AddBCC("" . $copy_d . "");
-        $mail->AddBCC("" . $copy_j . "");
+    if ($unidad_mina == 3) {
+        $cc[] = 'Omar.delgado@heliostarmetals.com';
+        $cc[] = 'Rigoberto.Villa@heliostarmetals.com';
+        $cc[] = 'juan.meneses@heliostarmetals.com';
     }
     
-    $seguridad = 'Lizbeth.Gonzalez@argonautgold.com';
-    $mail->AddBCC("" . $seguridad . "");
-    $mail->AddBCC("" . $email_pr . "");
+    $template = new SuscriptionDataEmail([
+        'proveedor_sol' => $proveedor_sol,
+        'empresa_sol' =>  $empresa_sol,
+        'fecha_cur' => $fecha_cur,
+        'app_url' => Env::get('APP_URL')
+    ]);
 
-    $mail->ContentType = "text/html";
-    $body = "El proveedor <strong>" . $proveedor_sol . "</strong> de la empresa <strong>" . $empresa_sol . "</strong> ha solicitado su curso de induccion completa para la fecha pr&oacutexima: <strong>" . $fecha_cur . "</strong><br>";
-    $body .= "<br>Para revisar la lista de inscritos favor de ingresar al Sistema de Control de Acceso:<br><br>";
-    $body .= "http://argonautgoldvisit.com <br><br>";
-    $body .= "Atte: Control de Acceso Argonaut Gold INC";
-    $mail->Body = $body;
-    $mail->Send();
+    $mailService = new MailService(new PHPMailerProvider());
+
+    $message = new EmailMessageDTO(
+        to: $to,
+        subject: $template->subject(),
+        body:  $template->render(),
+        cc : $cc
+    );
+
+    $mailService->send($message);
 }
 else {
     $html = "Hubo un error. Por favor reintente";

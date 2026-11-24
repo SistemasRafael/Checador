@@ -1,0 +1,14 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #333;
+}
+
+.email-header {
+    background: #0c2d5c;
+    color: white;
+    padding: 15px;
+}
+
+a {
+    color: #0066cc;
+}
