@@ -96,7 +96,7 @@ if(($_SESSION['LoggedIn']) <> ''){
                                      	org_id = ".$organi
                               ) or die(mysqli_error($mysqli));
     $organizac_adminis = $organizac_admin ->fetch_array(MYSQLI_ASSOC);
-    $org_admin = $organizac_adminis['usuario_administrador']; 
+    $org_admin = $organizac_adminis['usuario_administrador'] ?? 0; 
     
     $otros_prov_admin = $mysqli->query("SELECT administrador
                                    FROM 
@@ -131,19 +131,19 @@ if(($_SESSION['LoggedIn']) <> ''){
                                     ON arg_tipo_documentos.tipo_id = arg_usuarios_documentos.tipo_id   
                                 WHERE arg_tipo_documentos.tipo_id = 1 AND activo = 1 AND u_id = ".$u_id) or die(mysqli_error($mysqli));
     $user_firmado = $user_fir ->fetch_array(MYSQLI_ASSOC);
-    $seguro_act = $user_firmado['nombre']; 
-    $seguro_act_exp = $user_firmado['fecha_expira']; 
-    $seguro_act_path = $user_firmado['path']; 
-            
+    $seguro_act = $user_firmado['nombre'] ?? '';
+    $seguro_act_exp = $user_firmado['fecha_expira'] ?? '';
+    $seguro_act_path = $user_firmado['path'] ?? '';
+
     $user_fir1 = $mysqli->query("SELECT arg_usuarios_documentos.nombre, arg_usuarios_documentos.fecha_expira,  arg_usuarios_documentos.path 
                                  FROM `arg_usuarios_documentos` 
                                  LEFT JOIN arg_tipo_documentos
                                     ON arg_tipo_documentos.tipo_id = arg_usuarios_documentos.tipo_id   
                                  WHERE arg_tipo_documentos.tipo_id = 2 AND activo = 1 AND u_id = ".$u_id) or die(mysqli_error($mysqli));
     $user_firmado1 = $user_fir1 ->fetch_array(MYSQLI_ASSOC);
-    $ine_act = $user_firmado1['nombre'];
-    $ine_act_exp = $user_firmado1['fecha_expira'];
-    $ine_act_path = $user_firmado1['path'];
+    $ine_act = $user_firmado1['nombre'] ?? '';
+    $ine_act_exp = $user_firmado1['fecha_expira'] ?? '';
+    $ine_act_path = $user_firmado1['path'] ?? '';
             
     $user_fir2 = $mysqli->query("SELECT arg_usuarios_documentos.nombre, arg_usuarios_documentos.fecha_expira, arg_usuarios_documentos.path
                                  FROM `arg_usuarios_documentos` 
@@ -151,9 +151,9 @@ if(($_SESSION['LoggedIn']) <> ''){
                                 	ON arg_tipo_documentos.tipo_id = arg_usuarios_documentos.tipo_id   
                                  WHERE arg_tipo_documentos.tipo_id = 3 AND activo = 1 AND u_id = ".$u_id) or die(mysqli_error($mysqli));
     $user_firmado3 = $user_fir2 ->fetch_array(MYSQLI_ASSOC);
-    $licencia_act = $user_firmado3['nombre'];
-    $licencia_act_exp = $user_firmado3['fecha_expira'];
-    $licencia_act_path = $user_firmado3['path'];
+    $licencia_act = $user_firmado3['nombre'] ?? '';
+    $licencia_act_exp = $user_firmado3['fecha_expira'] ?? '';
+    $licencia_act_path = $user_firmado3['path'] ?? '';
     
     $user_fir4 = $mysqli->query("SELECT arg_usuarios_documentos.nombre, arg_usuarios_documentos.fecha_expira, arg_usuarios_documentos.path
                                   FROM `arg_usuarios_documentos` 
@@ -161,9 +161,9 @@ if(($_SESSION['LoggedIn']) <> ''){
                                     ON arg_tipo_documentos.tipo_id = arg_usuarios_documentos.tipo_id   
                                   WHERE arg_tipo_documentos.tipo_id = 4 AND activo = 1 AND u_id = ".$u_id) or die(mysqli_error($mysqli));
     $user_firmado4 = $user_fir4 ->fetch_array(MYSQLI_ASSOC);
-    $pago_imssinf = $user_firmado4['nombre']; 
-    $pago_imss_fec = $user_firmado4['fecha_expira']; 
-    $pago_imss_pat = $user_firmado4['path'];
+    $pago_imssinf = $user_firmado4['nombre'] ?? '';
+    $pago_imss_fec = $user_firmado4['fecha_expira'] ?? '';
+    $pago_imss_pat = $user_firmado4['path'] ?? '';
     
     $user_fir5 = $mysqli->query("SELECT arg_usuarios_documentos.nombre, arg_usuarios_documentos.fecha_expira, arg_usuarios_documentos.path
                                   FROM `arg_usuarios_documentos` 

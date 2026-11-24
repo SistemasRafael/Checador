@@ -1,32 +1,43 @@
 <?php
-    use PHPMailer\PHPMailer\PHPMailer;
-    require 'librerias/PHPMailer.php';
-    require 'librerias/SMTP.php';
-    require 'librerias/Exception.php';
+    require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/../config/Env.php';
 
+    require_once __DIR__ . '/../mail/MailService.php';
+    require_once __DIR__ . '/../mail/providers/PHPMailerProvider.php';
+    require_once __DIR__ . '/../mail/templates/VisitRequestEmail.php';
+    
     $u_id = $_SESSION['u_id'];
     $trn_id_rel = $_POST['trn_id'] ?? '';
     date_default_timezone_set('America/Phoenix');
+    Env::load(dirname(__DIR__) . '/.env');
 
-    function enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id) {
-        $mail = new PHPMailer();
-        $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
-        $mail->FromName = "Bitacora de Visitas MineData-Access de HelioStarMetals";
-        $mail->Subject = "Envio desde Bitacora de Visitas MineData-Access HelioStarMetals";			
-        $mail->AddBCC("".$atiende_correo."");
-        $mail->SMTPOptions = array('ssl' => array(
-                                        'verify_peer' => FALSE,
-                                        'verify_peer_name' => FALSE,
-                                        'allow_self_signed' => TRUE
-                                    )); 
+    function enviar(string $atiende_correo, 
+                    string $folio, 
+                    string $proveedor,
+                    string $empresa, 
+                    string $fecha, 
+                    int $trn_id)
+    {
+        $template = new VisitRequestEmail([
+            'folio' => $folio,
+            'proveedor' => $proveedor,
+            'empresa' => $empresa,
+            'fecha' => $fecha,
+            'app_url' => Env::get('APP_URL')."print_doc.php?trn_id={$trn_id}"
+        ]);
 
-        $mail->ContentType = "text/html";
-        $body = "Has recibido una solicitud de visita con folio <strong>".$folio."</strong> del proveedor <strong>".$proveedor."</strong> empresa <strong>".$empresa."</strong> con fecha <strong>".$fecha."</strong><br>";
-        $body .= "<br>Para ver mas detalles favor de ingresar a la bitácora de visitas:<br><br>";
-        $body .= " <font color='red'>http://heliostarvisit.com/print_doc.php?trn_id=</font>".$trn_id."<br><br>";
-        $body .= "Atte: MineData-Access Control de Acceso de HelioStar Metals";
-        $mail->Body = $body;
-        $mail->Send();
+        $mailService = new MailService(new PHPMailerProvider());
+
+        $message = new EmailMessageDTO(
+            to: [$atiende_correo],
+            subject: $template->subject(),
+            body:  $template->render(),
+            cc: [
+                'bitacora@heliostarmetals.com'
+            ]
+        );
+
+        $mailService->send($message);
     }
 
     if(isset($_POST['subir_poliza'])) {

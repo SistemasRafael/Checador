@@ -28,7 +28,6 @@ if (($_SESSION['LoggedIn']) <> '') {
   $u_id = $_SESSION['u_id'];
   $unidad_mina_sel = $_GET['unidad'] ?? 0;
   $vig  = $_SESSION['empleado'];
-  //echo $vig;
   $vigilancia = $mysqli->query("SELECT (CASE WHEN division = 'vigilante' THEN 1 ELSE 0 END) AS tipo_user FROM arg_usuarios WHERE u_id = ".$u_id) or die(mysqli_error($mysqli));             
   $vigilancia_v = $vigilancia->fetch_assoc();
   $vigilancia_ver = $vigilancia_v['tipo_user'];
@@ -36,8 +35,6 @@ if (($_SESSION['LoggedIn']) <> '') {
   if (is_null($unidad_mina_sel)) {
     $unidad_mina_sel = $_SESSION['unidad_def'];
   }
-  
-  //echo $_SESSION['unidad_def'];
 ?>
 
   <div class="container">
@@ -163,8 +160,6 @@ if (($_SESSION['LoggedIn']) <> '') {
   </div>
   <?php 
   date_default_timezone_set("America/Phoenix");
-
-  //echo $u_id;
   
   $mysqli->set_charset("utf8");
   $check_id = $mysqli->query("SELECT
@@ -177,16 +172,10 @@ if (($_SESSION['LoggedIn']) <> '') {
   $row_uid = $check_id->fetch_array(MYSQLI_ASSOC);
   $empleado = $row_uid['division'];
   
-  /*(CASE WHEN division = 'empleado' THEN 1 
-          WHEN division = 'vigilante' THEN 99 
-    ELSE 0 END) AS division */
-  
   $mes_actual = date("m");
-  $mes_sel = $_GET['mes'] ?? '';
+  $mes_sel = $_GET['mes'] ?? '0';
   $datos_meses = $mysqli->query("SELECT num_mes, mes FROM `meses` WHERE num_mes > " . $mes_actual) or die(mysqli_error($mysqli));
-
   $tipo = $_GET['tipo'];
-  
   if (is_null($tipo)){$tipo = 1;};
   //Visitas Abiertas
   if ($tipo <= 5) {
@@ -229,8 +218,8 @@ if (($_SESSION['LoggedIn']) <> '') {
         $fechafinal = $ano_actual . '-' . $mes_sel . '-' . $dia_final;
       }
     }
-    mysqli_multi_query($mysqli, "CALL visor_visitas (" . $u_id . ",'" . $hoy . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", 0" . ")") or die(mysqli_error($mysqli));
 
+    mysqli_multi_query($mysqli, "CALL visor_visitas (" . $u_id . ",'" . $hoy . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", 0" . ")") or die(mysqli_error($mysqli));
   ?>
     <br />
     <br />
@@ -239,7 +228,6 @@ if (($_SESSION['LoggedIn']) <> '') {
         <div class="col-md-3 col-lg-3">
           <a href="dashboard.php?tipo=1&unidad=<?php  echo $unidad_mina_sel; ?>">Hoy</a>
         </div>
-        <?php //if ($vig <> 99){?>
              <?php  if ($vigilancia_ver == 0){?>
             <div class="col-md-3 col-lg-3">
               <a href="dashboard.php?tipo=2&unidad=<?php  echo $unidad_mina_sel; ?>">Semana</a>
@@ -280,8 +268,6 @@ if (($_SESSION['LoggedIn']) <> '') {
 
       $fecha_ini =  date("Y-m-d", strtotime($hoy . "- 30 days"));
       $fechafinal = date("Y-m-d", strtotime($hoy . "- 1 days"));
-      //echo $fecha_ini.'fin';
-
       mysqli_multi_query($mysqli, "CALL visor_visitas (" . $u_id . ",'" . $fecha_ini . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", 0" . ")") or die(mysqli_error($mysqli));
     }
     //Seleccionando un periodo de visitas y  un estado
@@ -290,8 +276,7 @@ if (($_SESSION['LoggedIn']) <> '') {
         $fecha_ini  = $_POST['fecha_inicial'];
         $fechafinal = $_POST['fecha_final'];
         $estado = $_POST['estado'];
-        $hoy = $fecha_ini; // date("Y-m-d");
-
+        $hoy = $fecha_ini;
         mysqli_multi_query($mysqli, "CALL visor_visitas (" . $u_id . ",'" . $fecha_ini . "','" . $fechafinal . "'," . $empleado . ", " . $unidad_mina_sel . ", " . $estado . ")") or die(mysqli_error($mysqli));
       }
     }
@@ -308,7 +293,6 @@ if (($_SESSION['LoggedIn']) <> '') {
                 <?php  $fecha_minima_val = date('Y-m-j');
                 $nuevafecha = strtotime('-1 day', strtotime($fecha_minima_val));
                 $nuevafecha = date('Y-m-d', $nuevafecha);
-                //echo $nuevafecha; //2020-12-31
                 ?>
                 <input type="date" name="fecha_inicial" class="form-control" id="fecha_inicial" max="<?php  echo $nuevafecha; ?>" />
               </div>
@@ -357,7 +341,6 @@ if (($_SESSION['LoggedIn']) <> '') {
     <div class="row">
       <?php 
       $html_en = "";
-
       if ($tipo != 10) {
         $html_en = "<table class='table table-striped' style='font-size:13px' id='encabezado'>
                       <thead>
