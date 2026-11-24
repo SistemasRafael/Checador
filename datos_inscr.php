@@ -93,7 +93,7 @@ if ($resultado->num_rows > 0) {
         'Lizbeth.Gonzalez@heliostarmetals.com'
     ];
 
-    $cc = ['rafael.flores@heliostarmetals.com'];
+    $cc = [];
 
     if ($unidad_mina == 1) {
         $cc[] = 'julio.esquer@heliostarmetals.com';

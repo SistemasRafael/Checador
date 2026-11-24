@@ -13,7 +13,7 @@ class ChangeStateEmail extends EmailTemplate
 
     public function subject(): string
     {
-        return "Envio desde Bitacora de Visitas de MineData-Access HelioStarMetals";
+        return "Envio desde Bitacora de Visitas de MineData-Access HeliostarVisit";
     }
 
     public function render(): string

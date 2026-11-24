@@ -118,7 +118,7 @@
                         ea.trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));
                         
     $to = [$proveedor_correo, $atiende_correo];
-    $cc = ['rafael.flores@heliostarmetals.com'];
+    $cc = [];
                     
     if ($prov_admin->num_rows > 0) {
         while ($row_emails = $prov_admin->fetch_assoc()) {

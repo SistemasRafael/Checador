@@ -13,7 +13,7 @@ class SuscriptionDataEmail extends EmailTemplate
 
     public function subject(): string
     {
-        return "Envio desde Bitacora de Registro de Argonaut Gold INC.";
+        return "Envio desde Bitacora de Registro de HeliostarVisit.";
     }
 
     public function render(): string

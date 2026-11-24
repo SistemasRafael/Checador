@@ -33,8 +33,7 @@
             subject: $template->subject(),
             body:  $template->render(),
             cc: [
-                'bitacora@heliostarmetals.com', 
-                'rafael.flores@heliostarmetals.com'
+                'bitacora@heliostarmetals.com'
             ]
         );
 
