@@ -705,7 +705,7 @@
 
         <?$result_m = $mysqli->query("SELECT 0 AS act_id, 'Motivo de la visita' AS nombre UNION ALL
 
-                                      SELECT act_id, nombre FROM `arg_actividad`") or die(mysqli_error());                             
+                                      SELECT act_id, nombre FROM `arg_actividad`") or die(mysqli_error($mysqli));                             
 
                               while ( $row6 = $result_m ->fetch_array(MYSQLI_ASSOC)) {
 
@@ -1629,7 +1629,7 @@ $mysqli -> set_charset("utf8");
 
                                     
 
-                                    $result = $mysqli->query("SELECT unidad_id, Nombre FROM arg_empr_unidades") or die(mysqli_error());
+                                    $result = $mysqli->query("SELECT unidad_id, Nombre FROM arg_empr_unidades") or die(mysqli_error($mysqli));
 
                                     while( $row = $result ->fetch_array(MYSQLI_ASSOC)) 
 
