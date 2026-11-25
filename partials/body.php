@@ -1,32 +1,43 @@
 <?php
-    use PHPMailer\PHPMailer\PHPMailer;
-    require 'librerias/PHPMailer.php';
-    require 'librerias/SMTP.php';
-    require 'librerias/Exception.php';
+    require_once __DIR__ . '/../vendor/autoload.php';
+    require_once __DIR__ . '/../config/Env.php';
 
+    require_once __DIR__ . '/../mail/MailService.php';
+    require_once __DIR__ . '/../mail/providers/PHPMailerProvider.php';
+    require_once __DIR__ . '/../mail/templates/VisitRequestEmail.php';
+    
     $u_id = $_SESSION['u_id'];
     $trn_id_rel = $_POST['trn_id'] ?? '';
     date_default_timezone_set('America/Phoenix');
+    Env::load(dirname(__DIR__) . '/.env');
 
-    function enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id) {
-        $mail = new PHPMailer();
-        $mail->From = "argonautgoldvisit@argonautgoldvisit.com";
-        $mail->FromName = "Bitacora de Visitas MineData-Access de HelioStarMetals";
-        $mail->Subject = "Envio desde Bitacora de Visitas MineData-Access HelioStarMetals";			
-        $mail->AddBCC("".$atiende_correo."");
-        $mail->SMTPOptions = array('ssl' => array(
-                                        'verify_peer' => FALSE,
-                                        'verify_peer_name' => FALSE,
-                                        'allow_self_signed' => TRUE
-                                    )); 
+    function enviar(string $atiende_correo, 
+                    string $folio, 
+                    string $proveedor,
+                    string $empresa, 
+                    string $fecha, 
+                    int $trn_id)
+    {
+        $template = new VisitRequestEmail([
+            'folio' => $folio,
+            'proveedor' => $proveedor,
+            'empresa' => $empresa,
+            'fecha' => $fecha,
+            'app_url' => Env::get('APP_URL')."print_doc.php?trn_id={$trn_id}"
+        ]);
 
-        $mail->ContentType = "text/html";
-        $body = "Has recibido una solicitud de visita con folio <strong>".$folio."</strong> del proveedor <strong>".$proveedor."</strong> empresa <strong>".$empresa."</strong> con fecha <strong>".$fecha."</strong><br>";
-        $body .= "<br>Para ver mas detalles favor de ingresar a la bitácora de visitas:<br><br>";
-        $body .= " <font color='red'>http://heliostarvisit.com/print_doc.php?trn_id=</font>".$trn_id."<br><br>";
-        $body .= "Atte: MineData-Access Control de Acceso de HelioStar Metals";
-        $mail->Body = $body;
-        $mail->Send();
+        $mailService = new MailService(new PHPMailerProvider());
+
+        $message = new EmailMessageDTO(
+            to: [$atiende_correo],
+            subject: $template->subject(),
+            body:  $template->render(),
+            cc: [
+                'bitacora@heliostarmetals.com'
+            ]
+        );
+
+        $mailService->send($message);
     }
 
     if(isset($_POST['subir_poliza'])) {
@@ -235,14 +246,30 @@
                             </tr>";
             }
 
-            $html_veh.="</tbody></table>";
-            echo utf8_decode("$html_en");
-            echo utf8_decode("$html_m");
-            echo utf8_decode("$html_c");
-            echo utf8_decode("$html_v");
-            echo utf8_decode("$html_veh");
-        ?>
-        <div class="container">
+                  $html_veh.="</tbody></table>";
+
+                      echo utf8_decode("$html_en");
+
+                      echo utf8_decode("$html_m");
+
+                      echo utf8_decode("$html_c");
+
+                      echo utf8_decode("$html_v");
+
+                      echo utf8_decode("$html_veh");
+                      
+                   /* $respuesta  = $html_en;
+                    $respuesta .= $html_m;
+                    $respuesta .= $html_c;
+                    $respuesta .= $html_v;
+                    $respuesta .= $html_veh;
+                    echo ($respuesta);*/
+                ?>
+
+              
+
+           <div class="container">
+
            <div class="col-4 col-md-11 col-lg-11">
                 <div class="col-4 col-md-4 col-lg-4">
                     <form method="post" action="print_doc.php?trn_id=<?php echo $trn_id_rel;  ?>" target="_blank" name="Printform" id="Printform">  
@@ -667,31 +694,26 @@
         htmlTagsH = '';
     }
 
-    function agregarMot() {
+      function agregarMot() {
 
         var htmlTagsM = '';
-
         count_click4 += 1;   
-
-        
-
         var name_id_act = "actividad"+count_click4;        
-
         htmlTagsM = '<class="container">'
 
         +'<select name="'+name_id_act+'" id="'+name_id_act+'" class="form-control">' 
 
-        <?php $result_m = $mysqli->query("SELECT 0 AS act_id, 'Motivo de la visita' AS nombre UNION ALL
+        <?$result_m = $mysqli->query("SELECT 0 AS act_id, 'Motivo de la visita' AS nombre UNION ALL
 
-                                      SELECT act_id, nombre FROM `arg_actividad`") or die(mysqli_error($mysqli));                             
+                                      SELECT act_id, nombre FROM `arg_actividad`") or die(mysqli_error());                             
 
                               while ( $row6 = $result_m ->fetch_array(MYSQLI_ASSOC)) {
 
                               ?>       
 
-        +'<option value="<?php echo $row6['act_id']?>"><?php echo $row6['nombre']?></option>'
+        +'<option value="<?echo $row6['act_id']?>"><?echo $row6['nombre']?></option>'
 
-        <?php }?>
+        <?}?>
 
         +'</select>'
 
@@ -700,85 +722,36 @@
         +'</div>'
 
         $('#tbmotivo tbody').append(htmlTagsM);
-
-        console.log(htmlTagsM);        
-
         htmlTagsM = '';
-
     }
-
     
-
-    //Agregar fila distintas areas en la visita
-
-      function agregarArea() {
-
+    function agregarArea() {
         var htmlTagsM = '';
-
         count_click5 += 1;   
-
-        
-
         var name_id_area = "area"+count_click5;  
-
         var mina_sel = document.getElementById("organizacion").value;
-
-        
 
         if (mina_sel ==''){
-
             alert('Debe elegir una unidad de mina');
-
         }
-
-        else{
-
+        else {
             $.ajax({
-
-            		url: 'combo_areas.php' ,
-
-            		type: 'POST' ,
-
-            		dataType: 'html',
-
-            		data: {unidad_id:mina_sel,name_id_area:name_id_area},
-
-            	})
-
-            	.done(function(respuesta){
-
-            	    //alert(respuesta)
-
-            	
-
-            		$('#tbarea tbody').append(respuesta);
-
-              })
-
+                url: 'combo_areas.php' ,
+                type: 'POST' ,
+                dataType: 'html',
+                data: {unidad_id:mina_sel,name_id_area:name_id_area},
+            }).done(function(respuesta) { 
+                $('#tbarea tbody').append(respuesta);
+            });
         }
-
     }
-
     
-
-    //Agregar fila distintas areas en la visita
-
-      function actualizar_areas(uid) {
-
+    function actualizar_areas(uid) {
         var htmlTagsM = '';
-
-        //count_click5 += 1;  
-
         var user_id = uid;
-
         ValidaCursos(user_id);
-
-        
-
         var name_id_area = "area0";
-
         var mina_sel = document.getElementById("organizacion").value;
-
         $.ajax({
 
             		url: 'combo_areas.php' ,
@@ -809,207 +782,102 @@
 
     }
 
-    function ValidaCursos($u_id)
 
-        {
 
-            var u_id = $u_id
+ </script>
 
-            var organ_id = document.getElementById("organizacion").value;
+ 
 
-            var motivo   = document.getElementById("actividad0").value;
+ 
 
-            if (motivo == 0){
+<script>
 
-                alert('Debe seleccionar una motivo para su visita. Reintente');
+    function ValidaCursos($u_id) {
+        var u_id = $u_id;
+        var organ_id = document.getElementById("organizacion").value;
+        var motivo   = document.getElementById("actividad0").value;
 
+        if (motivo == 0) {
+            alert('Debe seleccionar una motivo para su visita. Reintente');
+        }
+        
+        $.ajax({
+            url: 'datos_cursos.php' ,
+            type: 'POST' ,
+            dataType: 'html',
+            data: {u_id: u_id, motivo:motivo,organ_id:organ_id},
+        }).done(function(respuesta){
+            var resp =  respuesta  
+            if (resp == 'NO'){
+                alert('Usted no tiene los cursos de inducción requeridos. Favor de solicitarlos por este medio');                   
+                var cadena = '/cursos.php?tipo=0&unidad=0';
+                window.location.href = cadena;
             }
-
-           /* alert(u_id);
-
-            alert(organ_id);*/
-
-            $.ajax({
-
-            		url: 'datos_cursos.php' ,
-
-            		type: 'POST' ,
-
-            		dataType: 'html',
-
-            		data: {u_id: u_id, motivo:motivo,organ_id:organ_id},
-
-            	})
-
-            	.done(function(respuesta){
-
-            	    //alert(respuesta);
-
-                    var resp =  respuesta  
-
-                    if (resp == 'NO'){
-
-                        alert('Usted no tiene los cursos de inducción requeridos. Favor de solicitarlos por este medio');                   
-
-                        var cadena = '/cursos.php?tipo=0&unidad=0';
-
-                        window.location.href = cadena;
-
-                    }
-
-              })
-
-      }
-
+        });
+    }
     
-
-    //Validar vigencias del usuario firmado 
-
-    function ValidaVigencias($u_id)
-
-        {
-
-           var u_id = $u_id
-
-           var fecha = document.getElementById("fecha_inicial").value;
-
-           document.getElementById("fecha_final").value = fecha;
-
-           var usuario_seleccionado = document.getElementById("empleado").value;
-
-           var area_seleccionada = document.getElementById("area0").value;
-
-           
-
-           if (area_seleccionada == 0){
-
-               alert('Por favor seleccione el área a visitar. Reintente');
-
-               document.getElementById("fecha_inicial").value = '';
-
-               document.getElementById("fecha_final").value = '';
-
-           }
-
-           
-
-           if (usuario_seleccionado == 0){
-
-                alert('Por favor especifique el empleado a quien visita. Reintente');
-
-                document.getElementById("fecha_inicial").value = '';
-
-                document.getElementById("fecha_final").value = '';
-
-            }
-
-            else{
-
-                //alert(u_id);           
-
-                //alert(fecha);
-
-                $.ajax({
-
-                		url: 'datos_vigencias.php' ,
-
-                		type: 'POST' ,
-
-                		dataType: 'html',
-
-                		data: {u_id: u_id, fecha:fecha},
-
-                	})
-
-                	.done(function(respuesta){
-
-                		//$("#"+caja_visor).html(respuesta); 
-
-                        var resp =  respuesta                
-
-                       // console.log(respuesta);
-
-                        //alert(resp);
-
-                        if (resp != ""){
-
-                            alert('Usted tiene documentos vencidos:  '+resp);                   
-
-                            var cadena = '/doc_personas.php?u_id='+u_id;
-
-                            window.location.href = cadena;
-
-                        }
-
-                                           
-
-                  })
-
-            }
-
-      }
-
-      
-
-      //Validación de fecha final Vs fecha inicial
-
-      function ValidaVigenciasFin($u_id)
-
-        {
-
-            var u_id = $u_id
-
-            var fecha_ini = document.getElementById("fecha_inicial").value;
-
-            var fecha = document.getElementById("fecha_final").value;
-
-            //alert(fecha_ini);           
-
-            //alert(fecha);
-
-            if (fecha < fecha_ini){
-
-                alert('La fecha final no puede ser menor que la fecha inicial.')
-
-                document.getElementById("fecha_final").value = fecha_ini;
-
-            }         
-
-            else{            
-
-                $.ajax({
-
-                		url: 'datos_vigencias.php' ,
-
-                		type: 'POST' ,
-
-                		dataType: 'html',
-
-                		data: {u_id: u_id, fecha:fecha},
-
-                	})
-
-                	.done(function(respuesta){
-
-                        var resp =  respuesta
-
-                        if (resp != ""){
-
-                            alert('Usted tiene documentos vencidos:  '+resp);                     
-
-                            var cadena = '/doc_personas.php?u_id='+u_id;
-
-                            window.location.href = cadena;
-
-                        }
-
-                                           
-
-                  })
-
+    function ValidaVigencias($u_id) {
+        var u_id = $u_id;
+        var fecha = document.getElementById("fecha_inicial").value;
+        document.getElementById("fecha_final").value = fecha;
+        var usuario_seleccionado = document.getElementById("empleado").value;
+        var area_seleccionada = document.getElementById("area0").value;
+
+        if (area_seleccionada == 0){
+            alert('Por favor seleccione el área a visitar. Reintente');
+            document.getElementById("fecha_inicial").value = '';
+            document.getElementById("fecha_final").value = '';
         }
 
-      }
+        if (usuario_seleccionado == 0) {
+            alert('Por favor especifique el empleado a quien visita. Reintente');
+            document.getElementById("fecha_inicial").value = '';
+            document.getElementById("fecha_final").value = '';
+        }
+        else {
+            $.ajax({
+                url: 'datos_vigencias.php' ,
+                type: 'POST',
+                dataType: 'html',
+                data: {u_id: u_id, fecha:fecha},
+            })
+            .done(function(respuesta) {
+                var resp =  respuesta;
+                if (resp != ""){
+                    alert('Usted tiene documentos vencidos:  '+resp);                   
+                    var cadena = '/doc_personas.php?u_id='+u_id;
+                    window.location.href = cadena;
+                }
+            })
+        }
+    }
+    
+    function ValidaVigenciasFin($u_id) {
+        var u_id = $u_id;
+        var fecha_ini = document.getElementById("fecha_inicial").value;
+        var fecha = document.getElementById("fecha_final").value;
+
+        if (fecha < fecha_ini){
+            alert('La fecha final no puede ser menor que la fecha inicial.')
+            document.getElementById("fecha_final").value = fecha_ini;
+        }         
+        else {            
+            $.ajax({
+                url: 'datos_vigencias.php' ,
+                type: 'POST' ,
+                dataType: 'html',
+                data: {u_id: u_id, fecha:fecha},
+            }).done(function(respuesta){
+                var resp =  respuesta;
+
+                if (resp != "") {
+                    alert('Usted tiene documentos vencidos:  '+resp);                     
+                    var cadena = '/doc_personas.php?u_id='+u_id;
+                    window.location.href = cadena;
+                }
+            });
+        }
+    }
 
 </script>
 <style type="text/css">
@@ -1214,18 +1082,47 @@
     </div>
 </div>
 
-<?php
-    $mysqli -> set_charset("utf8");
-    if (isset($_POST['visita'])) {
-        $fecha_ini       = $_POST['fecha_inicial'];
-        $fecha_fin       = $_POST['fecha_final'];
-        $unidad_mina     = $_POST['organizacion'];
-        $empleado_visita = $_POST['empleado'];
-        $empleado_responsable = $_POST['empleado_visita'];    
-        $placas          = $_POST['placas'];
-        $cantidad1       = $_POST['cantidad_h'];
-        $herr            = $_POST['herr'];
-        $comentario_vis  = $_POST['comentario_visita'];
+ 
+
+
+
+
+
+<?
+
+$mysqli -> set_charset("utf8");
+
+
+
+    
+
+ 
+
+/*else{*/
+
+   //echo 'aca';
+
+    if (isset($_POST['visita'])){
+
+    //    echo 'aca';
+
+    $fecha_ini       = $_POST['fecha_inicial'];
+
+    $fecha_fin       = $_POST['fecha_final'];
+
+    $unidad_mina     = $_POST['organizacion'];
+
+    $empleado_visita = $_POST['empleado'];
+
+    $empleado_responsable = $_POST['empleado_visita'];    
+
+    $placas          = $_POST['placas'];
+
+    $cantidad1       = $_POST['cantidad_h'];
+
+    $herr            = $_POST['herr'];
+
+    $comentario_vis  = $_POST['comentario_visita'];
 
         if ($fecha_ini == '') {
             echo "<script> error_fecha();</script>";
@@ -1259,9 +1156,11 @@
             while ($x <> 0) {        
                 $ac = 'actividad';
                 $act = $ac.$z;
+
                 $actividad = $_POST[$act];
 
-                if ($actividad=='') {
+                if ($actividad==''){
+
                     $x = 0;
                 }
                 else {
@@ -1277,6 +1176,7 @@
             while ($l <> 0){        
                 $ar = 'area';
                 $are = $ar.$m;
+
                 $area_sel = $_POST[$are];
 
                 if ($area_sel==''){
@@ -1296,8 +1196,11 @@
             while ($i <> 0){        
                 $pro = 'busqueda_proveedor';
                 $prov = $pro.$p;
+
                 $p1 = $_POST[$prov];
-                if ($p1=='') {
+
+                if ($p1==''){
+
                     $i = 0;
                 }
                 else {
@@ -1313,12 +1216,16 @@
             while ($j <> 0) {        
                 $herr = 'cantidad';
                 $herramienta_cant = $herr.$k;
+
                 $c1 = $_POST[$herramienta_cant];
+
                 $herr_bus = 'busqueda_herr';
                 $herr_busqueda = $herr_bus.$k;
+
                 $h1 = $_POST[$herr_busqueda];
 
-                if ($c1=='') {
+                if ($c1==''){
+
                     $j = 0;
                 }
                 else {
@@ -1527,13 +1434,27 @@
                                     </tr>";
                     }
 
-                    $html_veh.="</tbody></table>";
-                    echo utf8_decode("$html_en");
-                    echo utf8_decode("$html_m");
-                    echo utf8_decode("$html_c");
-                    echo utf8_decode("$html_v");
-                    echo utf8_decode("$html_veh");
+                  $html_veh.="</tbody></table>";
+
+                      echo utf8_decode("$html_en");
+
+                      echo utf8_decode("$html_m");
+
+                      echo utf8_decode("$html_c");
+
+                      echo utf8_decode("$html_v");
+
+                      echo utf8_decode("$html_veh");
+                      
+                  /*  $respuesta  = $html_en;
+                    $respuesta .= $html_m;
+                    $respuesta .= $html_c;
+                    $respuesta .= $html_v;
+                    $respuesta .= $html_veh;
+                    echo ($respuesta);*/
                 ?>
+
+              
 
                 <div class="container">
                     <div class="col-4 col-md-11 col-lg-11">
@@ -1594,33 +1515,44 @@
 
             <div class="container">
                 <div class="col-4 col-md-12 col-lg-12">
-                    <form method="post" action="app.php" name="Visitaform" id="Visitaform">
-                        <fieldset>  
-                            <div class="container" class="col-md-12 col-lg-12">
-                                <div class="container" class="col-md-12 col-lg-12">            
-                                    <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-                                        <label>MOTIVOS DE LA VISITA</label>
-                                        <!-- <input type="button" class="btn btn-warning" name="agregar_motivo" id="agregar_motivo" onclick="agregarMot();" value="+ Agregar Motivo" />  -->
-                                        <a id="AddvisitorsId"
-                                            href=""
-                                            name="herr"
-                                            class="btn btn-warning"
-                                            data-toggle="modal"
-                                            data-target="#AddVisitors"
-                                            title="Agregar visitantes"
-                                            style="display:none;">
-                                            Agregar visitantes
-                                        </a>
-                                    </div>
-                                    <br/>
-                                    <br/>
+
+                
+
+                <form method="post" action="app.php" name="Visitaform" id="Visitaform">  
+
+                <fieldset>  
+
+                     <div class="container" class="col-md-12 col-lg-12">
+
+                        <div class="container" class="col-md-12 col-lg-12">            
+
+                                <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+
+                                    <label>MOTIVOS DE LA VISITA</label>
+
+                                     <input type="button" class="btn btn-warning" name="agregar_motivo" id="agregar_motivo" onclick="agregarMot();" value="+ Agregar Motivo" /> 
+
+                               
+
                                 </div>
-                                <div class="col-md-3 col-lg-3">                    
-                                    <?php 
-                                        $u_id = $_SESSION['u_id'];
-                                        $motivotop = $_GET['actividad'] ?? '';
-                                        if ($motivotop == "")
-                                            $motivot = "Motivo de la visita";
+
+                              <br/>
+
+                              <br/>
+
+                        </div>
+
+                        <div class="col-md-3 col-lg-3">                    
+
+                                       <?
+
+                                            $u_id = $_SESSION['u_id'];
+
+                                            $motivotop = $_GET['actividad'];
+
+                                            if ($motivotop == "")
+
+                                                $motivot = "Motivo de la visita";
 
                                         echo ("<select name=\"actividad0\" id=\"actividad0\" class=\"form-control\" onchange=\"cambioActividad(this)\"> ");        
                                         echo ("<option value=$nomtop>$motivot</option>");
@@ -1658,51 +1590,112 @@
                                 <br/>                                         
                                 <br/>
                                 <br/>
-                                <div class="container" class="col-md-12 col-lg-12">
-                                    <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-                                        <label>DATOS GENERALES</label>
-                                        <input type="button" class="btn btn-warning" name="agregar_area" id="agregar_area" onclick="agregarArea();" value="+ Agregar Area" /> 
-                                    </div>
-                                    <br/>
-                                </div>                                                                        
-                                <br />
-                                <div class="col-md-11 col-lg-11">
-                                    <div class="col-md-2 col-lg-2">
-                                        <?php                            
-                                            $organizaciontop = $_GET['organizacion'] ?? '';
-                                            if ($organizaciontop == "")
-                                                $nombretop = "Unidad Mina";
+
+                       
+
+                        <div class="container" class="col-md-12 col-lg-12">
+
+                            <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+
+                                    <label>DATOS GENERALES</label>
+
+                                     <input type="button" class="btn btn-warning" name="agregar_area" id="agregar_area" onclick="agregarArea();" value="+ Agregar Area" /> 
+
+                            </div>
+
+                            <br/>
+
+                         </div>                                                                        
+
+                         <br />                                                
+
+                          
+
+                          <div class="col-md-11 col-lg-11">
+
+                              <div class="col-md-2 col-lg-2">
+
+                                    <?                           
+
+                                    $organizaciontop = $_GET['organizacion'];
+
+                                    if ($organizaciontop == "")
+
+                                    $nombretop = "Unidad Mina";
 
                                             echo ("<form name=\"Busqueda\" id=\"Busqueda\">");
                                             echo ("<select name=\"organizacion\" id=\"organizacion\" onchange=\"actualizar_areas(".$u_id.")\" class=\"form-control\" > ");        
                                             echo ("<option value=$nomtop>$nombretop</option>");
 
-                                            $result = $mysqli->query("SELECT unidad_id, Nombre FROM arg_empr_unidades") or die(mysqli_error($mysqli));
-                                            while( $row = $result ->fetch_array(MYSQLI_ASSOC)) {
-                                                $nombre =($row["Nombre"]);
-                                                $nomenclatura = $row["unidad_id"];
-                                                echo ("<option value=$nomenclatura>$nombre</option>");
-                                            }
-                                            
-                                            echo ("</select>");
-                                        ?>
-                                    </div>
-                                    <div class="col-md-2 col-lg-2">
-                                        <?php                 
-                                            $empleadotop = $_GET['empleado'] ?? '';
-                                            if ($empleadotop == "")
-                                                $emptop = "Areas";
-                                            
-                                            echo ("<select name=\"area0\" id=\"area0\" class=\"form-control\" > ");        
-                                            echo ("<option value=$nomtop>$emptop</option>");
-                                            echo ("</select>");
-                                        ?>
-                                    </div>
-                                    <div class="col-md-2 col-lg-2">
-                                        <?php                 
-                                            $empleadotop = $_GET['empleado'] ?? '';
-                                            if ($empleadotop == "")
-                                                $emptop = "A quien visita";
+                                    
+
+                                    $result = $mysqli->query("SELECT unidad_id, Nombre FROM arg_empr_unidades") or die(mysqli_error());
+
+                                    while( $row = $result ->fetch_array(MYSQLI_ASSOC)) 
+
+                                      
+
+                                      {
+
+                                      $nombre =($row["Nombre"]);
+
+                                      $nomenclatura = $row["unidad_id"];
+
+                                      
+
+                                      echo ("<option value=$nomenclatura>$nombre</option>");
+
+                                      }          
+
+                                              echo ("</select>");   
+
+                           
+
+                                    ?>
+
+                            </div>
+
+                       
+
+                        <div class="col-md-2 col-lg-2">
+
+                                    <?                
+
+                                    $empleadotop = $_GET['empleado'];
+
+                                    if ($empleadotop == "")
+
+                                    $emptop = "Areas";
+
+                                  
+
+                                    //echo ("<form name=\"empleado_busqueda\" id=\"empleado_busqueda\">");
+
+                                   
+
+                                    echo ("<select name=\"area0\" id=\"area0\" class=\"form-control\" > ");        
+
+                                    echo ("<option value=$nomtop>$emptop</option>");
+
+                                    
+
+                                    echo ("</select>");
+
+                                     ?>  
+
+                             </div>
+
+                       
+
+                       <div class="col-md-2 col-lg-2">
+
+                                    <?                
+
+                                    $empleadotop = $_GET['empleado'];
+
+                                    if ($empleadotop == "")
+
+                                    $emptop = "A quien visita";
 
                                             echo ("<select name=\"empleado\" id=\"empleado\" class=\"form-control\" > ");        
                                             echo ("<option value=$nomtop>$emptop</option>");
@@ -1774,7 +1767,9 @@
                                 <div class="container" class="col-md-12 col-lg-12">
                                     <div class="col-md-7 col-lg-7 bg-info text-white text-center">
                                         <label>DATOS DE LOS VISITANTES</label>
-                                            <input type="button" class="btn btn-warning" name="agregar" id="agregar" onclick="agregarFila(<?php echo $cont_click=$cont_click+1?>);" value="+ Agregar Visitante" /> 
+
+                                            <input type="button" class="btn btn-warning" name="agregar" id="agregar" onclick="agregarFila(<?echo $cont_click=$cont_click+1?>);" value="+ Agregar Visitante" /> 
+
                                     </div>
                                 </div>
                                 <?php 
@@ -1873,36 +1868,97 @@
                                                     echo ("</select><br/>");
                                                 ?>
                                                 <a href='' name="herr" class="btn btn-primary" data-toggle="modal" data-target="#Modalherr"  class="sepV_a" title="Nueva Herramienta">+ </a>
-                                            </div>
-                                        </span>
-                                    </div>    
-                                </div> 
+
+                                            </span>
+
+                                           	</div>
+
+                            	     </div>    
+
+                                  </div> 
+
+                                  <br/>
+
+                                  <div class="container-fluid">                                
+
+                                        <?echo ("<div class=\"maintable\">
+
+                                            <table class=\"sortable\"id=\"tbherr\"cellspacing=\0;>
+
+                                            <thead>
+
+                                               
+
+                                            </thead>
+
+                                            <body>"); 
+
+                                            echo ("<tr>"); 
+
+                                           
+
+                                            echo ("</tr>"); 
+
+                                            echo("</body></table></div> ");
+
+                                            echo ("</br>");
+
+                                        ?>
+
+                                    </div>  
+
+                                    
+
+                           </div>   
+
+                           
+
+                      </div>
+
+                       <div class="container">
+
+                             <div class="col-md-6 col-lg-6">   
+
                                 <br/>
-                                <div class="container-fluid">                                
-                                    <?php 
-                                        echo ("<div class=\"maintable\">
-                                                <table class=\"sortable\"id=\"tbherr\"cellspacing=\0;>
-                                                <thead>
-                                                </thead>
-                                                <body>"); 
-                                        echo ("<tr>");
-                                        echo ("</tr>"); 
-                                        echo("</body></table></div> ");
-                                        echo ("</br>");
-                                    ?>
-                                </div>
+
+                                <input type="submit" class="btn btn-primary" name="visita" id="visita" value="Registrar Visita" />                            
+
                             </div>
-                        </fieldset> 
-                    </form> 
-                    <div class="container">
-                        <div class="col-md-6 col-lg-6">   
-                            <br/>
-                            <input type="submit" class="btn btn-primary" name="visita" id="visita" value="Registrar Visita" />                            
-                        </div>
-                    </div>  
-                </div>
-            </div>                                
-        <?php }      
-    } 
-?>
+
+                        </div>                                 
+
+                                 <? 	
+
+            }
+
+             ?>              
+
+                              
+
+                        
+
+               </div> 
+
+               </fieldset>  
+
+            </form> 
+
+          
+
+          </div>
+
+        </div>           
+
+      <?      
+
+    }
+
+  
+
+  //}
+
+?>                    
+
+    
+
 <script type="text/javascript" src="js/jquery.min.js"></script>

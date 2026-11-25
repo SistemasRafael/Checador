@@ -1,6 +1,6 @@
-<?php //@session_start(); 
-  include('partials/header.php');
-   $_SESSION['empresa_nueva'] = '';
+<?php
+    include('partials/header.php');
+    $_SESSION['empresa_nueva'] = '';
 ?>
  <script>
     function resetPass()
@@ -70,9 +70,6 @@
 	</body>
 	</html>
  </div>
- 
- 
-
 </div>
 </div>
 <?php exit(); ?>

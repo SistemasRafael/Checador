@@ -1,14 +1,13 @@
-<?php include("seguridad.php"); 
-      //require("vehiculos_datos.php");
+<?php 
+	include("seguridad.php");
 ?>
-	<html>
+<html>
 	<head>
-		<title>Argonaut Gold</title>
-		</head>
-		<body>
-		
-            <?include('partials/header.php'); ?>
-            <?include('partials/calendario.php'); ?>
-            <?include('partials/footer.php'); ?>
-		</body>
-		</html>
+		<title>HelioStarVisit</title>
+	</head>
+	<body>
+		<?php include('partials/header.php'); ?>
+		<?php include('partials/calendario.php'); ?>
+		<?php include('partials/footer.php'); ?>
+	</body>
+</html>
