@@ -1,7 +1,7 @@
 <?php
-include "Utilerias/Response.php";
+include "utilities/Response.php";
 
-class VisitantesRepositorio
+class VisitRepository
 {
     private mysqli $mysqli;
 

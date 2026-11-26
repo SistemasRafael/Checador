@@ -1,149 +1,149 @@
 <?php
-    require_once __DIR__ . '/../vendor/autoload.php';
-    require_once __DIR__ . '/../config/Env.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config/Env.php';
 
-    require_once __DIR__ . '/../mail/MailService.php';
-    require_once __DIR__ . '/../mail/providers/PHPMailerProvider.php';
-    require_once __DIR__ . '/../mail/templates/VisitRequestEmail.php';
+require_once __DIR__ . '/../mail/MailService.php';
+require_once __DIR__ . '/../mail/providers/PHPMailerProvider.php';
+require_once __DIR__ . '/../mail/templates/VisitRequestEmail.php';
+
+$u_id = $_SESSION['u_id'];
+$trn_id_rel = $_POST['trn_id'] ?? '';
+date_default_timezone_set('America/Phoenix');
+Env::load(dirname(__DIR__) . '/.env');
+
+function enviar(string $atiende_correo, 
+                string $folio, 
+                string $proveedor,
+                string $empresa, 
+                string $fecha, 
+                int $trn_id)
+{
+    $template = new VisitRequestEmail([
+        'folio' => $folio,
+        'proveedor' => $proveedor,
+        'empresa' => $empresa,
+        'fecha' => $fecha,
+        'app_url' => Env::get('APP_URL')."print_doc.php?trn_id={$trn_id}"
+    ]);
+
+    $mailService = new MailService(new PHPMailerProvider());
+
+    $message = new EmailMessageDTO(
+        to: [$atiende_correo],
+        subject: $template->subject(),
+        body:  $template->render(),
+        cc: [
+            'bitacora@heliostarmetals.com'
+        ]
+    );
+
+    $mailService->send($message);
+}
+
+if(isset($_POST['subir_poliza'])) {
+    $placa  = $_POST['placa'];
+    $marca  = $_POST['marca'];
+    $modelo = $_POST['modelo'];
+    $color  = $_POST['color'];
+    $poliza = $_POST['poliza'];
+    $expira_veh = $_POST['expira_veh'];
+    $path_pol = $_POST['path_pol'];
+    $org_id = $_SESSION['org_id'];
+
+    $id_max_ve = $mysqli->query("SELECT max(veh_id) FROM arg_vehiculos");
+    $id_maximo = $id_max_ve->fetch_array(MYSQLI_ASSOC);
+    $id_max_veh = $id_maximo['max(veh_id)'];
+    $id_max_veh = $id_max_veh + 1;
+
+    $placa_dup = $mysqli->query("SELECT placas FROM arg_vehiculos WHERE placas = '".$placa."'");
+    $placa_dupli = $placa_dup->fetch_array(MYSQLI_ASSOC);
+    $placa_duplic = $placa_dupli['placas'];
+    $placa_duplicada = $placa_duplic;
+
+    $archivo = $_FILES['pol_vehi']['name'];
+    $dest  = 'upload/vehiculos/'; 
+    $desti = rtrim($dest).$archivo;
+    copy($_FILES['pol_vehi']['tmp_name'],$desti);
     
-    $u_id = $_SESSION['u_id'];
-    $trn_id_rel = $_POST['trn_id'] ?? '';
-    date_default_timezone_set('America/Phoenix');
-    Env::load(dirname(__DIR__) . '/.env');
-
-    function enviar(string $atiende_correo, 
-                    string $folio, 
-                    string $proveedor,
-                    string $empresa, 
-                    string $fecha, 
-                    int $trn_id)
-    {
-        $template = new VisitRequestEmail([
-            'folio' => $folio,
-            'proveedor' => $proveedor,
-            'empresa' => $empresa,
-            'fecha' => $fecha,
-            'app_url' => Env::get('APP_URL')."print_doc.php?trn_id={$trn_id}"
-        ]);
-
-        $mailService = new MailService(new PHPMailerProvider());
-
-        $message = new EmailMessageDTO(
-            to: [$atiende_correo],
-            subject: $template->subject(),
-            body:  $template->render(),
-            cc: [
-                'bitacora@heliostarmetals.com'
-            ]
-        );
-
-        $mailService->send($message);
+    if (isset($placa)) {
+        $query = "INSERT INTO arg_vehiculos (veh_id, placas, marca, modelo, color, poliza, org_id, path, fecha_expira ) 
+                VALUES ($id_max_veh, '$placa', '$marca', '$modelo', '$color', '$poliza', $org_id, '$desti', '$expira_veh')";
+        $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
+        $resultado = $mysqli->query("SELECT veh_id, placas, marca FROM arg_vehiculos WHERE org_id = ".$org_id." ORDER BY veh_id DESC") or die(mysqli_error($mysqli));
     }
+}
 
-    if(isset($_POST['subir_poliza'])) {
-        $placa  = $_POST['placa'];
-        $marca  = $_POST['marca'];
-        $modelo = $_POST['modelo'];
-        $color  = $_POST['color'];
-        $poliza = $_POST['poliza'];
-        $expira_veh = $_POST['expira_veh'];
-        $path_pol = $_POST['path_pol'];
-        $org_id = $_SESSION['org_id'];
+if ($trn_id_rel <> '' || $trn_id_rel > 0) {
+    $mysqli -> set_charset("utf8");
+    $datos_v = $mysqli->query("SELECT arg_actividad.nombre 
+                                FROM arg_entradas_actividad 
+                                LEFT JOIN arg_actividad ON arg_actividad.act_id = arg_entradas_actividad.act_id
+                                WHERE trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli)); 
 
-        $id_max_ve = $mysqli->query("SELECT max(veh_id) FROM arg_vehiculos");
-        $id_maximo = $id_max_ve->fetch_array(MYSQLI_ASSOC);
-        $id_max_veh = $id_maximo['max(veh_id)'];
-        $id_max_veh = $id_max_veh + 1;
+    $datos_e = $mysqli->query("SELECT 
+                                    folio, 
+                                    fecha_inicio, 
+                                    fecha_final, 
+                                    arg_empr_unidades.nombre AS unidad, 
+                                    arg_entradas.unidad_id AS unidad_id, 
+                                    arg_usuarios.nombre AS usuario,
+                                    arg_entradas.comentario
+                                FROM `arg_entradas` 
+                                LEFT JOIN arg_entradas_detalle ON arg_entradas_detalle.trn_id_rel = arg_entradas.trn_id
+                                LEFT  JOIN arg_empr_unidades ON arg_empr_unidades.unidad_id = arg_entradas.unidad_id
+                                LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id
+                                WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
+    $entrada = $datos_e->fetch_assoc();
 
-        $placa_dup = $mysqli->query("SELECT placas FROM arg_vehiculos WHERE placas = '".$placa."'");
-        $placa_dupli = $placa_dup->fetch_array(MYSQLI_ASSOC);
-        $placa_duplic = $placa_dupli['placas'];
-        $placa_duplicada = $placa_duplic;
+    $datos_areas = $mysqli->query("SELECT
+                                        ear.area_id, 
+                                        ua.area, 
+                                        uar.email AS encargado_area
+                                    FROM `arg_entradas_areas` ear
+                                    LEFT JOIN arg_entradas e ON e.trn_id = ear.trn_id_rel
+                                    LEFT JOIN arg_unidades_areas ua ON ear.area_id = ua.area_id AND ua.unidad_id = e.unidad_id
+                                    LEFT JOIN arg_usuarios AS uar ON uar.u_id = ua.u_id
+                                    WHERE ear.trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli));
 
-        $archivo = $_FILES['pol_vehi']['name'];
-        $dest  = 'upload/vehiculos/'; 
-        $desti = rtrim($dest).$archivo;
-        copy($_FILES['pol_vehi']['tmp_name'],$desti);
-        
-        if (isset($placa)) {
-            $query = "INSERT INTO arg_vehiculos (veh_id, placas, marca, modelo, color, poliza, org_id, path, fecha_expira ) 
-                    VALUES ($id_max_veh, '$placa', '$marca', '$modelo', '$color', '$poliza', $org_id, '$desti', '$expira_veh')";
-            $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
-            $resultado = $mysqli->query("SELECT veh_id, placas, marca FROM arg_vehiculos WHERE org_id = ".$org_id." ORDER BY veh_id DESC") or die(mysqli_error($mysqli));
-        }
-    }
+    $datos_at = $mysqli->query("SELECT
+                                    arg_usuarios.nombre AS atiende
+                                FROM `arg_entradas`                                         
+                                LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_atie
+                                WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
+    $usuario_atiende = $datos_at->fetch_assoc();
 
-    if ($trn_id_rel <> '' || $trn_id_rel > 0) {
-        $mysqli -> set_charset("utf8");
-        $datos_v = $mysqli->query("SELECT arg_actividad.nombre 
-                                    FROM arg_entradas_actividad 
-                                    LEFT JOIN arg_actividad ON arg_actividad.act_id = arg_entradas_actividad.act_id
-                                    WHERE trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli)); 
+    $datos_res = $mysqli->query("SELECT arg_usuarios.nombre AS responsable
+                                FROM `arg_entradas`                                         
+                                LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_resp
+                                WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
+    $usuario_resp = $datos_res->fetch_assoc();     
 
-        $datos_e = $mysqli->query("SELECT 
-                                        folio, 
-                                        fecha_inicio, 
-                                        fecha_final, 
-                                        arg_empr_unidades.nombre AS unidad, 
-                                        arg_entradas.unidad_id AS unidad_id, 
-                                        arg_usuarios.nombre AS usuario,
-                                        arg_entradas.comentario
-                                    FROM `arg_entradas` 
-                                    LEFT JOIN arg_entradas_detalle ON arg_entradas_detalle.trn_id_rel = arg_entradas.trn_id
-                                    LEFT  JOIN arg_empr_unidades ON arg_empr_unidades.unidad_id = arg_entradas.unidad_id
-                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id
-                                    WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
-        $entrada = $datos_e->fetch_assoc();
+    $visitantes = $mysqli->query("SELECT 
+                                    arg_usuarios.nombre AS visitante, 
+                                    usuarios_doc.imss AS ine
+                                FROM `arg_entradas_detalle`                                         
+                                LEFT JOIN arg_usuarios ON arg_entradas_detalle.usuario_id = arg_usuarios.u_id
+                                LEFT JOIN usuarios_doc ON usuarios_doc.u_id = arg_entradas_detalle.usuario_id AND tipo_id = 2
+                                WHERE trn_id_rel =  ".$trn_id_rel) or die(mysqli_error($mysqli));
 
-        $datos_areas = $mysqli->query("SELECT
-                                            ear.area_id, 
-                                            ua.area, 
-                                            uar.email AS encargado_area
-                                        FROM `arg_entradas_areas` ear
-                                        LEFT JOIN arg_entradas e ON e.trn_id = ear.trn_id_rel
-                                        LEFT JOIN arg_unidades_areas ua ON ear.area_id = ua.area_id AND ua.unidad_id = e.unidad_id
-                                        LEFT JOIN arg_usuarios AS uar ON uar.u_id = ua.u_id
-                                        WHERE ear.trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli));
+    $vehiculos = $mysqli->query("SELECT 
+                                    arg_usuarios_documentos.nombre, 
+                                    arg_usuarios_documentos.fecha_expira, 
+                                    arg_vehiculos.marca, 
+                                    arg_vehiculos.modelo, 
+                                    arg_vehiculos.placas
+                                FROM `arg_entradas` 
+                                LEFT JOIN arg_vehiculos ON arg_vehiculos.veh_id = arg_entradas.veh_id
+                                LEFT JOIN arg_usuarios_documentos ON arg_entradas.usuario_id = arg_usuarios_documentos.u_id AND tipo_id = 3 AND arg_usuarios_documentos.activo = 1
+                                WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
 
-        $datos_at = $mysqli->query("SELECT
-                                        arg_usuarios.nombre AS atiende
-                                    FROM `arg_entradas`                                         
-                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_atie
-                                    WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
-        $usuario_atiende = $datos_at->fetch_assoc();
-
-        $datos_res = $mysqli->query("SELECT arg_usuarios.nombre AS responsable
-                                    FROM `arg_entradas`                                         
-                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_resp
-                                    WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
-        $usuario_resp = $datos_res->fetch_assoc();     
-
-        $visitantes = $mysqli->query("SELECT 
-                                        arg_usuarios.nombre AS visitante, 
-                                        usuarios_doc.imss AS ine
-                                    FROM `arg_entradas_detalle`                                         
-                                    LEFT JOIN arg_usuarios ON arg_entradas_detalle.usuario_id = arg_usuarios.u_id
-                                    LEFT JOIN usuarios_doc ON usuarios_doc.u_id = arg_entradas_detalle.usuario_id AND tipo_id = 2
-                                    WHERE trn_id_rel =  ".$trn_id_rel) or die(mysqli_error($mysqli));
-
-        $vehiculos = $mysqli->query("SELECT 
-                                        arg_usuarios_documentos.nombre, 
-                                        arg_usuarios_documentos.fecha_expira, 
-                                        arg_vehiculos.marca, 
-                                        arg_vehiculos.modelo, 
-                                        arg_vehiculos.placas
-                                    FROM `arg_entradas` 
-                                    LEFT JOIN arg_vehiculos ON arg_vehiculos.veh_id = arg_entradas.veh_id
-                                    LEFT JOIN arg_usuarios_documentos ON arg_entradas.usuario_id = arg_usuarios_documentos.u_id AND tipo_id = 3 AND arg_usuarios_documentos.activo = 1
-                                    WHERE trn_id = ".$trn_id_rel) or die(mysqli_error($mysqli));
-
-        $herramientas = $mysqli->query("SELECT 
-                                            arg_entradas_herramientas.cantidad, 
-                                            arg_herramientas.nombre, 
-                                            arg_herramientas.marca
-                                        FROM `arg_entradas_herramientas` 
-                                        LEFT JOIN arg_herramientas ON arg_herramientas.herr_id = arg_entradas_herramientas.herr_id
-                                        WHERE trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli));       
+    $herramientas = $mysqli->query("SELECT 
+                                        arg_entradas_herramientas.cantidad, 
+                                        arg_herramientas.nombre, 
+                                        arg_herramientas.marca
+                                    FROM `arg_entradas_herramientas` 
+                                    LEFT JOIN arg_herramientas ON arg_herramientas.herr_id = arg_entradas_herramientas.herr_id
+                                    WHERE trn_id_rel = ".$trn_id_rel) or die(mysqli_error($mysqli));       
 ?>
     <div class="container">
         <h3><?php echo ("Folio Visita: ".$entrada['folio']); ?></h3>
@@ -246,31 +246,16 @@
                             </tr>";
             }
 
-                  $html_veh.="</tbody></table>";
+            $html_veh.="</tbody></table>";
 
-                      echo utf8_decode("$html_en");
-
-                      echo utf8_decode("$html_m");
-
-                      echo utf8_decode("$html_c");
-
-                      echo utf8_decode("$html_v");
-
-                      echo utf8_decode("$html_veh");
-                      
-                   /* $respuesta  = $html_en;
-                    $respuesta .= $html_m;
-                    $respuesta .= $html_c;
-                    $respuesta .= $html_v;
-                    $respuesta .= $html_veh;
-                    echo ($respuesta);*/
-                ?>
-
-              
-
-           <div class="container">
-
-           <div class="col-4 col-md-11 col-lg-11">
+            echo ("$html_en");
+            echo ("$html_m");
+            echo ("$html_c");
+            echo ("$html_v");
+            echo ("$html_veh");
+        ?>
+        <div class="container">
+            <div class="col-4 col-md-11 col-lg-11">
                 <div class="col-4 col-md-4 col-lg-4">
                     <form method="post" action="print_doc.php?trn_id=<?php echo $trn_id_rel;  ?>" target="_blank" name="Printform" id="Printform">  
                         <fieldset>  
@@ -295,7 +280,7 @@
             </div>
         </div>
 <?php
-    }
+}
 ?> 
 
 <script>
@@ -703,7 +688,7 @@
 
         +'<select name="'+name_id_act+'" id="'+name_id_act+'" class="form-control">' 
 
-        <?$result_m = $mysqli->query("SELECT 0 AS act_id, 'Motivo de la visita' AS nombre UNION ALL
+        <?php $result_m = $mysqli->query("SELECT 0 AS act_id, 'Motivo de la visita' AS nombre UNION ALL
 
                                       SELECT act_id, nombre FROM `arg_actividad`") or die(mysqli_error($mysqli));                             
 
@@ -711,9 +696,9 @@
 
                               ?>       
 
-        +'<option value="<?echo $row6['act_id']?>"><?echo $row6['nombre']?></option>'
+        +'<option value="<?php echo $row6['act_id']?>"><?php echo $row6['nombre']?></option>'
 
-        <?}?>
+        <?php }?>
 
         +'</select>'
 
@@ -1082,287 +1067,260 @@
     </div>
 </div>
 
- 
-
-
-
-
-
-<?
+<?php 
 
 $mysqli -> set_charset("utf8");
 
-
-
-    
-
- 
-
-/*else{*/
-
-   //echo 'aca';
-
-    if (isset($_POST['visita'])){
-
-    //    echo 'aca';
-
+if (isset($_POST['visita'])) { 
     $fecha_ini       = $_POST['fecha_inicial'];
-
     $fecha_fin       = $_POST['fecha_final'];
-
     $unidad_mina     = $_POST['organizacion'];
-
     $empleado_visita = $_POST['empleado'];
-
     $empleado_responsable = $_POST['empleado_visita'];    
-
     $placas          = $_POST['placas'];
-
-    $cantidad1       = $_POST['cantidad_h'];
-
-    $herr            = $_POST['herr'];
-
+    // $cantidad1       = $_POST['cantidad_h'];
+    $herr            = $_POST['herr'] ?? [];
     $comentario_vis  = $_POST['comentario_visita'];
 
-        if ($fecha_ini == '') {
-            echo "<script> error_fecha();</script>";
+    if ($fecha_ini == '') {
+        echo "<script> error_fecha();</script>";
+    }
+    else {   
+        $max_trn_id = $mysqli->query("SELECT MAX(trn_id) AS trn_id FROM arg_entradas") or die(mysqli_error($mysqli));
+        $max_trn = $max_trn_id ->fetch_array(MYSQLI_ASSOC);
+        $trn_id = $max_trn['trn_id'];
+        $trn_id = $trn_id +1;
+
+        if ($placas == '') {
+            $placas = 0;
+        }                
+
+        $max_folio_id = $mysqli->query("SELECT MAX(folio) AS folio_max FROM arg_entradas WHERE unidad_id = ".$unidad_mina) or die(mysqli_error($mysqli));
+        $max_folio = $max_folio_id ->fetch_array(MYSQLI_ASSOC);
+        $folio = $max_folio['folio_max'];
+        $folio = $folio + 1;    
+        $hoy = date("Y-m-d H:i:s");
+
+        $query = "INSERT INTO arg_entradas (trn_id, folio, fecha, fecha_inicio, fecha_final, unidad_id, usuario_id, usuario_id_atie, usuario_id_resp, veh_id, comentario )
+                    VALUES ($trn_id, $folio, '$hoy', '$fecha_ini', '$fecha_fin', $unidad_mina, $u_id,$empleado_visita, $empleado_responsable, $placas, '$comentario_vis')";
+        $mysqli->query($query);
+
+        $query = "INSERT INTO arg_entradas_estados (trn_id, estado_id, fecha, comentario )
+                    VALUES ($trn_id, 1, '$hoy', '')";
+        $mysqli->query($query) ;
+
+        $x = 1;
+        $z = 0;
+        while ($x <> 0) {        
+            $ac = 'actividad';
+            $act = $ac.$z;
+
+            $actividad = $_POST[$act] ?? '';
+
+            if ($actividad==''){
+
+                $x = 0;
+            }
+            else {
+                $query = "INSERT INTO arg_entradas_actividad (trn_id_rel, act_id) 
+                            VALUES ($trn_id, $actividad)";
+                $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
+                $z = $z+1;
+            }
         }
-        else {   
-            $max_trn_id = $mysqli->query("SELECT MAX(trn_id) AS trn_id FROM arg_entradas") or die(mysqli_error($mysqli));
-            $max_trn = $max_trn_id ->fetch_array(MYSQLI_ASSOC);
-            $trn_id = $max_trn['trn_id'];
-            $trn_id = $trn_id +1;
 
-            if ($placas == '') {
-                $placas = 0;
-            }                
+        $l = 1;
+        $m = 0;
+        while ($l <> 0){        
+            $ar = 'area';
+            $are = $ar.$m;
 
-            $max_folio_id = $mysqli->query("SELECT MAX(folio) AS folio_max FROM arg_entradas WHERE unidad_id = ".$unidad_mina) or die(mysqli_error($mysqli));
-            $max_folio = $max_folio_id ->fetch_array(MYSQLI_ASSOC);
-            $folio = $max_folio['folio_max'];
-            $folio = $folio + 1;    
-            $hoy = date("Y-m-d H:i:s");
+            $area_sel = $_POST[$are] ?? '';
 
-            $query = "INSERT INTO arg_entradas (trn_id, folio, fecha, fecha_inicio, fecha_final, unidad_id, usuario_id, usuario_id_atie, usuario_id_resp, veh_id, comentario )
-                        VALUES ($trn_id, $folio, '$hoy', '$fecha_ini', '$fecha_fin', $unidad_mina, $u_id,$empleado_visita, $empleado_responsable, $placas, '$comentario_vis')";
-            $mysqli->query($query);
-
-            $query = "INSERT INTO arg_entradas_estados (trn_id, estado_id, fecha, comentario )
-                        VALUES ($trn_id, 1, '$hoy', '')";
-            $mysqli->query($query) ;
-
-            $x = 1;
-            $z = 0;
-            while ($x <> 0) {        
-                $ac = 'actividad';
-                $act = $ac.$z;
-
-                $actividad = $_POST[$act];
-
-                if ($actividad==''){
-
-                    $x = 0;
-                }
-                else {
-                    $query = "INSERT INTO arg_entradas_actividad (trn_id_rel, act_id) 
-                                VALUES ($trn_id, $actividad)";
-                    $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
-                    $z = $z+1;
-                }
+            if ($area_sel==''){
+                $l = 0;
             }
-
-            $l = 1;
-            $m = 0;
-            while ($l <> 0){        
-                $ar = 'area';
-                $are = $ar.$m;
-
-                $area_sel = $_POST[$are];
-
-                if ($area_sel==''){
-                    $l = 0;
-                }
-                else{
-                    $query = "INSERT INTO arg_entradas_areas (trn_id_rel, area_id, estado_id, fecha)
-                                VALUES ($trn_id, $area_sel, 1, '$hoy')";
-                    $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
-                    $m = $m+1;
-                }
+            else{
+                $query = "INSERT INTO arg_entradas_areas (trn_id_rel, area_id, estado_id, fecha)
+                            VALUES ($trn_id, $area_sel, 1, '$hoy')";
+                $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
+                $m = $m+1;
             }
+        }
 
-            $i = 1;
-            $p = 1;
-            $proveedores=array();
-            while ($i <> 0){        
-                $pro = 'busqueda_proveedor';
-                $prov = $pro.$p;
+        $i = 1;
+        $p = 1;
+        $proveedores=array();
+        while ($i <> 0){        
+            $pro = 'busqueda_proveedor';
+            $prov = $pro.$p;
 
-                $p1 = $_POST[$prov];
+            $p1 = $_POST[$prov] ?? '';
 
-                if ($p1==''){
+            if ($p1==''){
 
-                    $i = 0;
-                }
-                else {
-                    $query = "INSERT INTO arg_entradas_detalle (trn_id_rel, usuario_id) VALUES ($trn_id, $p1)";
-                    $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));      
-                    $p = $p+1;
-                }
+                $i = 0;
             }
-
-            $j = 1;
-            $k = 0;
-            $herramientas=array();
-            while ($j <> 0) {        
-                $herr = 'cantidad';
-                $herramienta_cant = $herr.$k;
-
-                $c1 = $_POST[$herramienta_cant];
-
-                $herr_bus = 'busqueda_herr';
-                $herr_busqueda = $herr_bus.$k;
-
-                $h1 = $_POST[$herr_busqueda];
-
-                if ($c1==''){
-
-                    $j = 0;
-                }
-                else {
-                    $herramientas[$k] = $c1;
-                    $query = "INSERT INTO arg_entradas_herramientas (trn_id_rel, herr_id, cantidad) VALUES ($trn_id, $h1, $c1 )";
-                    $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
-                    $k = $k+1;
-                }
+            else {
+                $query = "INSERT INTO arg_entradas_detalle (trn_id_rel, usuario_id) VALUES ($trn_id, $p1)";
+                $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));      
+                $p = $p+1;
             }
+        }
 
-            //Datos para el correo
-            $datos_vis = $mysqli->query("SELECT 
-                                                folio,  
-                                                un.nombre AS mina, 
-                                                us.nombre as proveedor, 
-                                                us.email AS proveedor_correo, 
-                                                ati.nombre as atiende,
-                                                ati.email AS atiende_correo, 
-                                                o.nombre as empresa, 
-                                                ae.fecha_inicio
-                                        FROM arg_entradas ae
-                                        LEFT JOIN arg_empr_unidades un ON un.unidad_id = ae.unidad_id
-                                        LEFT JOIN arg_usuarios us ON us.u_id = ae.usuario_id
-                                        LEFT JOIN arg_usuarios ati ON ae.usuario_id_atie = ati.u_id                    
-                                        LEFT JOIN arg_organizaciones o ON o.org_id = us.org_id
-                                        WHERE ae.trn_id = ".$trn_id) or die(mysqli_error($mysqli));
-            $datos = $datos_vis ->fetch_array(MYSQLI_ASSOC);
-            $folio = $datos['folio'];
-            $proveedor = $datos['proveedor'];
-            $empresa = $datos['empresa'];
-            $fecha = $datos['fecha_inicio'];
-            $atiende_correo = $datos['atiende_correo'];
-            $proveedor_correo = $datos['proveedor_correo'];
+        $j = 1;
+        $k = 0;
+        $herramientas=array();
+        while ($j <> 0) {        
+            $herr = 'cantidad';
+            $herramienta_cant = $herr.$k;
 
-            if ($folio <> 0) {
-                enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id);
+            $c1 = $_POST[$herramienta_cant];
+
+            $herr_bus = 'busqueda_herr';
+            $herr_busqueda = $herr_bus.$k;
+
+            $h1 = $_POST[$herr_busqueda];
+
+            if ($c1==''){
+
+                $j = 0;
             }
+            else {
+                $herramientas[$k] = $c1;
+                $query = "INSERT INTO arg_entradas_herramientas (trn_id_rel, herr_id, cantidad) VALUES ($trn_id, $h1, $c1 )";
+                $mysqli->query($query) or die('Error, query failed : ' . mysqli_error($mysqli));
+                $k = $k+1;
+            }
+        }
+
+        //Datos para el correo
+        $datos_vis = $mysqli->query("SELECT 
+                                            folio,  
+                                            un.nombre AS mina, 
+                                            us.nombre as proveedor, 
+                                            us.email AS proveedor_correo, 
+                                            ati.nombre as atiende,
+                                            ati.email AS atiende_correo, 
+                                            o.nombre as empresa, 
+                                            ae.fecha_inicio
+                                    FROM arg_entradas ae
+                                    LEFT JOIN arg_empr_unidades un ON un.unidad_id = ae.unidad_id
+                                    LEFT JOIN arg_usuarios us ON us.u_id = ae.usuario_id
+                                    LEFT JOIN arg_usuarios ati ON ae.usuario_id_atie = ati.u_id                    
+                                    LEFT JOIN arg_organizaciones o ON o.org_id = us.org_id
+                                    WHERE ae.trn_id = ".$trn_id) or die(mysqli_error($mysqli));
+        $datos = $datos_vis ->fetch_array(MYSQLI_ASSOC);
+        $folio = $datos['folio'];
+        $proveedor = $datos['proveedor'];
+        $empresa = $datos['empresa'];
+        $fecha = $datos['fecha_inicio'];
+        $atiende_correo = $datos['atiende_correo'];
+        $proveedor_correo = $datos['proveedor_correo'];
+
+        if ($folio <> 0) {
+            enviar($atiende_correo, $folio, $proveedor, $empresa, $fecha, $trn_id);
+        }
             
-            $mysqli -> set_charset("utf8");
-            $datos_v = $mysqli->query("SELECT arg_actividad.nombre 
-                                    FROM arg_entradas_actividad 
-                                    LEFT JOIN arg_actividad ON arg_actividad.act_id = arg_entradas_actividad.act_id
-                                    WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));
+        $mysqli -> set_charset("utf8");
+        $datos_v = $mysqli->query("SELECT arg_actividad.nombre 
+                                FROM arg_entradas_actividad 
+                                LEFT JOIN arg_actividad ON arg_actividad.act_id = arg_entradas_actividad.act_id
+                                WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));
 
-            $datos_e = $mysqli->query("SELECT 
-                                            folio, 
-                                            fecha_inicio, 
-                                            fecha_final, 
-                                            arg_empr_unidades.nombre AS unidad, 
-                                            arg_entradas.unidad_id AS unidad_id, 
-                                            arg_usuarios.nombre AS usuario,
-                                            arg_entradas.comentario
+        $datos_e = $mysqli->query("SELECT 
+                                        folio, 
+                                        fecha_inicio, 
+                                        fecha_final, 
+                                        arg_empr_unidades.nombre AS unidad, 
+                                        arg_entradas.unidad_id AS unidad_id, 
+                                        arg_usuarios.nombre AS usuario,
+                                        arg_entradas.comentario
+                                    FROM `arg_entradas` 
+                                    LEFT JOIN arg_entradas_detalle ON arg_entradas_detalle.trn_id_rel = arg_entradas.trn_id
+                                    LEFT  JOIN arg_empr_unidades ON arg_empr_unidades.unidad_id = arg_entradas.unidad_id
+                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id
+                                    WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
+        $entrada = $datos_e->fetch_assoc();
+
+        $datos_areas = $mysqli->query("SELECT
+                                            ear.area_id, 
+                                            ua.area, 
+                                            uar.email AS encargado_area
+                                        FROM `arg_entradas_areas` ear
+                                        LEFT JOIN arg_entradas e ON e.trn_id = ear.trn_id_rel
+                                        LEFT JOIN arg_unidades_areas ua ON ear.area_id = ua.area_id AND ua.unidad_id = e.unidad_id
+                                        LEFT JOIN arg_usuarios AS uar ON uar.u_id = ua.u_id
+                                        WHERE ear.trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));
+
+        $datos_at = $mysqli->query("SELECT arg_usuarios.nombre AS atiende
+                                    FROM `arg_entradas`                                         
+                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_atie
+                                    WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
+        $usuario_atiende = $datos_at->fetch_assoc();
+        
+
+        $datos_res = $mysqli->query("SELECT arg_usuarios.nombre AS responsable
+                                    FROM `arg_entradas`                                         
+                                    LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_resp
+                                    WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
+        $usuario_resp = $datos_res->fetch_assoc(); 
+        
+        $visitantes = $mysqli->query("SELECT 
+                                            arg_usuarios.nombre AS visitante, 
+                                            usuarios_doc.imss AS ine
+                                        FROM `arg_entradas_detalle`                                         
+                                        LEFT JOIN arg_usuarios ON arg_entradas_detalle.usuario_id = arg_usuarios.u_id
+                                        LEFT JOIN usuarios_doc ON usuarios_doc.u_id = arg_entradas_detalle.usuario_id AND tipo_id = 2
+                                        WHERE trn_id_rel =  ".$trn_id) or die(mysqli_error($mysqli));
+                                        
+        $vehiculos = $mysqli->query("SELECT 
+                                            arg_usuarios_documentos.nombre, 
+                                            arg_usuarios_documentos.fecha_expira, 
+                                            arg_vehiculos.marca, 
+                                            arg_vehiculos.modelo, 
+                                            arg_vehiculos.placas
                                         FROM `arg_entradas` 
-                                        LEFT JOIN arg_entradas_detalle ON arg_entradas_detalle.trn_id_rel = arg_entradas.trn_id
-                                        LEFT  JOIN arg_empr_unidades ON arg_empr_unidades.unidad_id = arg_entradas.unidad_id
-                                        LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id
+                                        LEFT JOIN arg_vehiculos ON arg_vehiculos.veh_id = arg_entradas.veh_id
+                                        LEFT JOIN arg_usuarios_documentos ON arg_entradas.usuario_id = arg_usuarios_documentos.u_id AND tipo_id = 3 AND arg_usuarios_documentos.activo = 1
                                         WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
-            $entrada = $datos_e->fetch_assoc();
-
-            $datos_areas = $mysqli->query("SELECT
-                                                ear.area_id, 
-                                                ua.area, 
-                                                uar.email AS encargado_area
-                                            FROM `arg_entradas_areas` ear
-                                            LEFT JOIN arg_entradas e ON e.trn_id = ear.trn_id_rel
-                                            LEFT JOIN arg_unidades_areas ua ON ear.area_id = ua.area_id AND ua.unidad_id = e.unidad_id
-                                            LEFT JOIN arg_usuarios AS uar ON uar.u_id = ua.u_id
-                                            WHERE ear.trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));
-
-            $datos_at = $mysqli->query("SELECT arg_usuarios.nombre AS atiende
-                                        FROM `arg_entradas`                                         
-                                        LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_atie
-                                        WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
-            $usuario_atiende = $datos_at->fetch_assoc();
-            
-
-            $datos_res = $mysqli->query("SELECT arg_usuarios.nombre AS responsable
-                                        FROM `arg_entradas`                                         
-                                        LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id_resp
-                                        WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
-            $usuario_resp = $datos_res->fetch_assoc(); 
-            
-            $visitantes = $mysqli->query("SELECT 
-                                                arg_usuarios.nombre AS visitante, 
-                                                usuarios_doc.imss AS ine
-                                            FROM `arg_entradas_detalle`                                         
-                                            LEFT JOIN arg_usuarios ON arg_entradas_detalle.usuario_id = arg_usuarios.u_id
-                                            LEFT JOIN usuarios_doc ON usuarios_doc.u_id = arg_entradas_detalle.usuario_id AND tipo_id = 2
-                                            WHERE trn_id_rel =  ".$trn_id) or die(mysqli_error($mysqli));
-                                            
-            $vehiculos = $mysqli->query("SELECT 
-                                                arg_usuarios_documentos.nombre, 
-                                                arg_usuarios_documentos.fecha_expira, 
-                                                arg_vehiculos.marca, 
-                                                arg_vehiculos.modelo, 
-                                                arg_vehiculos.placas
-                                            FROM `arg_entradas` 
-                                            LEFT JOIN arg_vehiculos ON arg_vehiculos.veh_id = arg_entradas.veh_id
-                                            LEFT JOIN arg_usuarios_documentos ON arg_entradas.usuario_id = arg_usuarios_documentos.u_id AND tipo_id = 3 AND arg_usuarios_documentos.activo = 1
-                                            WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
-                                            
-            $herramientas = $mysqli->query("SELECT 
-                                                arg_entradas_herramientas.cantidad, 
-                                                arg_herramientas.nombre, 
-                                                arg_herramientas.marca
-                                            FROM `arg_entradas_herramientas` 
-                                            LEFT JOIN arg_herramientas ON arg_herramientas.herr_id = arg_entradas_herramientas.herr_id
-                                            WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));         
-            ?>
-            <div class="container">
-                <h3><?php echo ("Folio Visita: ".$entrada['folio']);?></h3>
-                <?php
-                    $html_en = "<table class='table table-bordered' id='encabezado'>
-                            <thead>
-                                <tr class='table-secondary'>   
-                                    <th scope='col'>Unidad de Mina: ".$entrada['unidad']."</th>
-                                    <th scope='col'>Areas: ";
-                                    while ($fila = $datos_areas->fetch_assoc()) {
-                                        $html_en.="<a>".$fila['area'].", "."</a>";
-                                    }
-                    $html_en.="</th>
-                                    <th scope='col'>Desde: ".$entrada['fecha_inicio']."</th>
-                                <th scope='col'>Hasta: ".$entrada['fecha_final']."</th>
+                                        
+        $herramientas = $mysqli->query("SELECT 
+                                            arg_entradas_herramientas.cantidad, 
+                                            arg_herramientas.nombre, 
+                                            arg_herramientas.marca
+                                        FROM `arg_entradas_herramientas` 
+                                        LEFT JOIN arg_herramientas ON arg_herramientas.herr_id = arg_entradas_herramientas.herr_id
+                                        WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));         
+?>
+        <div class="container">
+            <h3><?php echo ("Folio Visita: ".$entrada['folio']);?></h3>
+            <?php
+                $html_en = "<table class='table table-bordered' id='encabezado'>
+                        <thead>
+                            <tr class='table-secondary'>   
+                                <th scope='col'>Unidad de Mina: ".$entrada['unidad']."</th>
+                                <th scope='col'>Areas: ";
+                                while ($fila = $datos_areas->fetch_assoc()) {
+                                    $html_en.="<a>".$fila['area'].", "."</a>";
+                                }
+                $html_en.="</th>
+                                <th scope='col'>Desde: ".$entrada['fecha_inicio']."</th>
+                            <th scope='col'>Hasta: ".$entrada['fecha_final']."</th>
+                            </tr>
+                            <tr>            
+                            <th scope='col'>Registr&oacute: ".$entrada['usuario']."</th>
+                            <th scope='col'>Atiende: ".$usuario_atiende['atiende']."</th>
+                            <th scope='col'>Responsable: ".$usuario_resp['responsable']."</th>
+                            </tr>";
+                $html_m = "<table class='table table-bordered' id='motivos'>
+                                <thead>
+                                <tr class='bg-info'>            
+                                    <th scope='col'>Motivos de la Visita</th>
                                 </tr>
-                                <tr>            
-                                <th scope='col'>Registr&oacute: ".$entrada['usuario']."</th>
-                                <th scope='col'>Atiende: ".$usuario_atiende['atiende']."</th>
-                                <th scope='col'>Responsable: ".$usuario_resp['responsable']."</th>
-                                </tr>";
-                    $html_m = "<table class='table table-bordered' id='motivos'>
-                                    <thead>
-                                    <tr class='bg-info'>            
-                                        <th scope='col'>Motivos de la Visita</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                <td>";
+                            </thead>
+                            <tbody>
+                            <td>";
 
                     while ($fila = $datos_v->fetch_assoc()) { 
                         $html_m.="<a>".$fila['nombre'].", "."</a>";
@@ -1434,28 +1392,14 @@ $mysqli -> set_charset("utf8");
                                     </tr>";
                     }
 
-                  $html_veh.="</tbody></table>";
+                    $html_veh.="</tbody></table>";
 
-                      echo utf8_decode("$html_en");
-
-                      echo utf8_decode("$html_m");
-
-                      echo utf8_decode("$html_c");
-
-                      echo utf8_decode("$html_v");
-
-                      echo utf8_decode("$html_veh");
-                      
-                  /*  $respuesta  = $html_en;
-                    $respuesta .= $html_m;
-                    $respuesta .= $html_c;
-                    $respuesta .= $html_v;
-                    $respuesta .= $html_veh;
-                    echo ($respuesta);*/
+                    echo ("$html_en");
+                    echo ("$html_m");
+                    echo ("$html_c");
+                    echo ("$html_v");
+                    echo ("$html_veh");
                 ?>
-
-              
-
                 <div class="container">
                     <div class="col-4 col-md-11 col-lg-11">
                         <div class="col-4 col-md-4 col-lg-4">
@@ -1521,444 +1465,322 @@ $mysqli -> set_charset("utf8");
                 <form method="post" action="app.php" name="Visitaform" id="Visitaform">  
 
                 <fieldset>  
-
-                     <div class="container" class="col-md-12 col-lg-12">
-
+                    <div class="container" class="col-md-12 col-lg-12">
                         <div class="container" class="col-md-12 col-lg-12">            
-
-                                <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-
-                                    <label>MOTIVOS DE LA VISITA</label>
-
-                                     <input type="button" class="btn btn-warning" name="agregar_motivo" id="agregar_motivo" onclick="agregarMot();" value="+ Agregar Motivo" /> 
-
-                               
-
-                                </div>
-
-                              <br/>
-
-                              <br/>
-
-                        </div>
-
-                        <div class="col-md-3 col-lg-3">                    
-
-                                       <?
-
-                                            $u_id = $_SESSION['u_id'];
-
-                                            $motivotop = $_GET['actividad'];
-
-                                            if ($motivotop == "")
-
-                                                $motivot = "Motivo de la visita";
-
-                                        echo ("<select name=\"actividad0\" id=\"actividad0\" class=\"form-control\" onchange=\"cambioActividad(this)\"> ");        
-                                        echo ("<option value=$nomtop>$motivot</option>");
-
-                                        $result = $mysqli->query("SELECT act_id, nombre FROM arg_actividad") or die(mysqli_error($mysqli));
-                                        while( $row = $result ->fetch_array(MYSQLI_ASSOC))
-                                        {
-                                            $actividad =($row["nombre"]);
-                                            $act_id = $row["act_id"];
-                                            echo ("<option value=$act_id>$actividad</option>");
-                                        }          
-                                        echo ("</select><br />");
-                                    ?>  
-                                </div>
-                                <br/>
-                                <br/>
-                                <br/>
-                                <div class="container">                                
-                                    <?php 
-                                        echo ("<div class=\"maintable\">
-                                            <table class=\"sortable\"id=\"tbmotivo\"cellspacing=\0;>
-                                            <thead>
-                                            </thead>
-                                            <body>"); 
-
-                                        echo ("<tr>"); 
-                                        echo ("</tr>"); 
-                                        echo("</body></table></div> ");
-                                        echo ("</br>");
-                                    ?>
-                                </div>
-                                <div class="col-md-5 col-lg-5">
-                                    <input type="text" name="comentario_visita" class="form-control" id="comentario_visita" placeholder="Comentario General" />
-                                </div>
-                                <br/>                                         
-                                <br/>
-                                <br/>
-
-                       
-
-                        <div class="container" class="col-md-12 col-lg-12">
-
                             <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-
-                                    <label>DATOS GENERALES</label>
-
-                                     <input type="button" class="btn btn-warning" name="agregar_area" id="agregar_area" onclick="agregarArea();" value="+ Agregar Area" /> 
-
+                                <label>MOTIVOS DE LA VISITA</label>
+                                    <a id="AddvisitorsId"
+                                        href=""
+                                        name="herr"
+                                        class="btn btn-warning"
+                                        data-toggle="modal"
+                                        data-target="#AddVisitors"
+                                        title="Agregar visitantes"
+                                        style="display:none;">
+                                        Agregar visitantes
+                                    </a>
                             </div>
-
                             <br/>
+                            <br/>
+                        </div>
+                        <div class="col-md-3 col-lg-3">                    
+                            <?php 
+                                $u_id = $_SESSION['u_id'];
+                                $motivotop = $_GET['actividad'] ?? '';
 
-                         </div>                                                                        
+                                if ($motivotop == "")
+                                $motivot = "Motivo de la visita";
 
-                         <br />                                                
+                                echo ("<select name=\"actividad0\" id=\"actividad0\" class=\"form-control\" onchange=\"cambioActividad(this)\"> ");        
+                                echo ("<option value='0'>$motivot</option>");
 
-                          
+                                $result = $mysqli->query("SELECT act_id, nombre FROM arg_actividad") or die(mysqli_error($mysqli));
+                                while( $row = $result ->fetch_array(MYSQLI_ASSOC))
+                                {
+                                    $actividad =($row["nombre"]);
+                                    $act_id = $row["act_id"];
+                                    echo ("<option value=$act_id>$actividad</option>");
+                                }
+                                
+                                echo ("</select><br />");
+                            ?>  
+                        </div>
+                        <br/>
+                        <br/>
+                        <br/>
+                        <div class="container">                                
+                            <?php 
+                                echo ("<div class=\"maintable\">
+                                    <table class=\"sortable\"id=\"tbmotivo\"cellspacing=\0;>
+                                    <thead>
+                                    </thead>
+                                    <body>"); 
 
-                          <div class="col-md-11 col-lg-11">
+                                echo ("<tr>"); 
+                                echo ("</tr>"); 
+                                echo("</body></table></div> ");
+                                echo ("</br>");
+                            ?>
+                        </div>
+                        <div class="col-md-5 col-lg-5">
+                            <input type="text" name="comentario_visita" class="form-control" id="comentario_visita" placeholder="Comentario General" />
+                        </div>
+                        <br/>                                         
+                        <br/>
+                        <br/>
+                        <div class="container" class="col-md-12 col-lg-12">
+                            <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+                                <label>DATOS GENERALES</label>
+                                <input type="button" class="btn btn-warning" name="agregar_area" id="agregar_area" onclick="agregarArea();" value="+ Agregar Area" /> 
+                            </div>
+                            <br/>
+                        </div>                                                                        
+                        <br />                                                
+                        <div class="col-md-11 col-lg-11">
+                            <div class="col-md-2 col-lg-2">
+                                <?php                            
+                                    $organizaciontop = $_GET['organizacion'] ?? '';
 
-                              <div class="col-md-2 col-lg-2">
+                                    if ($organizaciontop == "") {
+                                        $nombretop = "Unidad Mina";
+                                    }
 
-                                    <?                           
-
-                                    $organizaciontop = $_GET['organizacion'];
-
-                                    if ($organizaciontop == "")
-
-                                    $nombretop = "Unidad Mina";
-
-                                            echo ("<form name=\"Busqueda\" id=\"Busqueda\">");
-                                            echo ("<select name=\"organizacion\" id=\"organizacion\" onchange=\"actualizar_areas(".$u_id.")\" class=\"form-control\" > ");        
-                                            echo ("<option value=$nomtop>$nombretop</option>");
-
-                                    
-
+                                    echo ("<form name=\"Busqueda\" id=\"Busqueda\">");
+                                    echo ("<select name=\"organizacion\" id=\"organizacion\" onchange=\"actualizar_areas(".$u_id.")\" class=\"form-control\" > ");        
+                                    echo ("<option value='0'>$nombretop</option>");
+                                            
                                     $result = $mysqli->query("SELECT unidad_id, Nombre FROM arg_empr_unidades") or die(mysqli_error($mysqli));
 
-                                    while( $row = $result ->fetch_array(MYSQLI_ASSOC)) 
-
-                                      
-
-                                      {
-
-                                      $nombre =($row["Nombre"]);
-
-                                      $nomenclatura = $row["unidad_id"];
-
-                                      
-
-                                      echo ("<option value=$nomenclatura>$nombre</option>");
-
-                                      }          
-
-                                              echo ("</select>");   
-
-                           
-
-                                    ?>
-
+                                    while( $row = $result ->fetch_array(MYSQLI_ASSOC)) {
+                                        $nombre =($row["Nombre"]);
+                                        $nomenclatura = $row["unidad_id"];
+                                        echo ("<option value=$nomenclatura>$nombre</option>");
+                                    }          
+                                    echo ("</select>");
+                                ?>
                             </div>
+                            <div class="col-md-2 col-lg-2">
+                                <?php                 
+                                    $empleadotop = $_GET['empleado'] ?? '';
+                                    $emptop = "";
 
-                       
-
-                        <div class="col-md-2 col-lg-2">
-
-                                    <?                
-
-                                    $empleadotop = $_GET['empleado'];
-
-                                    if ($empleadotop == "")
-
-                                    $emptop = "Areas";
-
-                                  
-
-                                    //echo ("<form name=\"empleado_busqueda\" id=\"empleado_busqueda\">");
-
-                                   
-
-                                    echo ("<select name=\"area0\" id=\"area0\" class=\"form-control\" > ");        
-
-                                    echo ("<option value=$nomtop>$emptop</option>");
-
+                                    if ($empleadotop == ""){
+                                        $emptop = "Areas";
+                                    }
                                     
+                                    echo ("<select name=\"area0\" id=\"area0\" class=\"form-control\" > ");
+                                    echo ("<option value=''>$emptop</option>");
+                                    echo ("</select>");
+                                ?>  
+                            </div>
+                            <div class="col-md-2 col-lg-2">
+                                <?php                 
+                                    $empleadotop = $_GET['empleado'] ?? '';
+                                    if ($empleadotop == "") {
+                                        $emptop = "A quien visita";
+                                    }
+                                    
+                                    echo ("<select name=\"empleado\" id=\"empleado\" class=\"form-control\" > ");        
+                                    echo ("<option value='0'>$emptop</option>");
+                                    $result = $mysqli->query("SELECT u_id, Nombre FROM arg_usuarios WHERE division = 'empleado' AND activo = 1 ORDER BY Nombre") or die(mysqli_error($mysqli));
+                                    while( $row = $result ->fetch_array(MYSQLI_ASSOC)) {
+                                        $nombre =($row["Nombre"]);
+                                        $nomenclatura = $row["u_id"];
+                                        echo ("<option value=$nomenclatura>$nombre</option>");
+                                    }
+                                    echo ("</select>");
+                                ?>
+                            </div>
+                            <div class="col-md-2 col-lg-2">
+                                <?php 
+                                    $empleadotop = $_GET['empleado'] ?? '';
+                                    if ($empleadotop == "")
+                                        $emptop = "Responsable visita";
+
+                                    echo ("<select name=\"empleado_visita\" id=\"empleado_visita\" class=\"form-control\" > ");        
+                                    echo ("<option value='0'>$emptop</option>");
+
+                                    $result = $mysqli->query("SELECT u_id, Nombre FROM arg_usuarios WHERE division = 'empleado' AND activo = 1 ORDER BY nombre") or die(mysqli_error($mysqli));
+                                    while( $row = $result ->fetch_array(MYSQLI_ASSOC)) {
+                                        $nombre =($row["Nombre"]);
+                                        $nomenclatura = $row["u_id"];
+                                        echo ("<option value=$nomenclatura>$nombre</option>");
+                                    }
 
                                     echo ("</select>");
+                                ?>
+                            </div>
+                        </div>
+                        <br /> 
+                        <br />
+                        <div class="container">                              
+                            <?php 
+                                echo ("<div> 
+                                            <div class=\"maintable\">
+                                                <table class=\"sortable\"id=\"tbarea\"cellspacing=\0;>
+                                                    <div><body></div>"); 
+                                echo ("<div><tr>");
+                                echo ("</tr></div>"); 
+                                echo("</body></table></div></div> ");
+                            ?>
+                        </div>
+                        <div class="col-md-2 col-lg-2">                            
+                            <label for="fecha_inicial"><b>Visita Desde:</b></label><br/>
+                            <?php   
+                                $fecha_minima_val = date('Y-m-j');
+                                $nuevafecha = strtotime ( '+0 day' , strtotime ( $fecha_minima_val ) ) ;
+                                $nuevafecha = date ( 'Y-m-d' , $nuevafecha );
+                            ?>
+                            <input type="date" name="fecha_inicial" class="form-control" id="fecha_inicial" onchange="ValidaVigencias(<?php echo $u_id;?>);" min="<?php echo $nuevafecha;?>"/>
+                        </div>
+                        <div class="col-md-2 col-lg-2">
+                            <label for="fecha_final"><b>Hasta:</b></label><br/>
+                            <input type="date" name="fecha_final" class="form-control" id="fecha_final" onchange="ValidaVigenciasFin(<?php echo $u_id;?>);" min="<?php echo $nuevafecha;?>"/>                                
+                        </div>
+                        <br/>
+                        <br/>                                                        
+                        <br />   
+                        <br /> 
+                        <br />
+                        <br />                               
+                        <div class="container" class="col-md-12 col-lg-12">
+                            <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+                                <label>DATOS DE LOS VISITANTES</label>
+                                <input type="button" class="btn btn-warning" name="agregar" id="agregar" onclick="agregarFila(<?php $cont_click = 0; echo $cont_click++; ?>);" value="+ Agregar Visitante" /> 
+                            </div>
+                        </div>
+                        <?php 
+                            echo ("<div class=\"maintable\">
+                                <table class=\"sortable\"id=\"tbdoctor\"cellspacing=\0;>
+                                <body>");
+                            echo ("<tr>");       
+                            echo ("<div class=\"col-md-2 col-lg-2\">");
+                            echo ("<label for=\"usuario_id\">Nombre<label>");
+                            echo ("<input type=\"usuario_id\" name=\"usuario_id\" placeholder=\"Nombre\" class=\"form-control\" value=\"".$_SESSION['nombre']."\" id=\"usuario_id\" readonly /></div>");
+                            echo ("<div class=\"col-md-2 col-lg-2\">");
+                            echo ("<label for=\"usuario_id\">IMSS/Gastos MM<label>");
+                            echo ("<input type=\"seguro\" name=\"seguro\" placeholder=\"IMSS-Gastos MM\" class=\"form-control\" value=\"".$_SESSION['seguro']."\" id=\"seguro\" readonly/></div>");
+                            echo ("<div class=\"col-md-2 col-lg-2\">");
+                            echo ("<label for=\"usuario_id\">INE<label>");
+                            echo ("<input type=\"ine\" name=\"ine\" placeholder=\"INE\" class=\"form-control\" value=\"".$ine."\" id=\"ine\" readonly /></div><br/>");
+                            echo ("</tr>");    
+                            echo ("</br>");    
+                            echo ("</br>"); 
+                            echo ("</br>");         
+                            echo("</body></table></div> <br/>");
+                        ?>
+                        <div class="container" class="col-md-10 col-lg-10">
+                            <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+                                <label>DATOS DEL VEHÍCULO</label>
+                            </div>                                        
+                            <br/>
+                        </div> 
+                        <div class="col-md-2 col-lg-2">     
+                            <label for="licencia_id">Licencia: </label>                           
+                            <input type="licencia_id" name="licencia_id" placeholder="Licencia" value="<?php echo $licencia;?>" class="form-control" id="licencia_id" readonly />
+                        </div>
+                        <div class="col-md-1 col-lg-1"> 
+                        </div>
+                        <div id="content" class="col-lg-3">
+                            <label for="placas">Placas: </label>
+                            <span class="input-group-btn" >
+                                <div class="input-group">                            
+                                    <?php 
+                                        $placastop = $_GET['placas'];
+                                        if ($placastop == "") {
+                                            $placastop = "Seleccione un vehículo...";
+                                        }
 
-                                     ?>  
+                                        echo ("<select name=\"placas\" id=\"placas\" class=\"form-control\" onchange=\"ShowSelected();\" > ");
+                                        echo ("<option value='0'>$placastop</option>");
 
-                             </div>
-
-                       
-
-                       <div class="col-md-2 col-lg-2">
-
-                                    <?                
-
-                                    $empleadotop = $_GET['empleado'];
-
-                                    if ($empleadotop == "")
-
-                                    $emptop = "A quien visita";
-
-                                            echo ("<select name=\"empleado\" id=\"empleado\" class=\"form-control\" > ");        
-                                            echo ("<option value=$nomtop>$emptop</option>");
-
-                                            $result = $mysqli->query("SELECT u_id, Nombre FROM arg_usuarios WHERE division = 'empleado' AND activo = 1 ORDER BY Nombre") or die(mysqli_error($mysqli));
-                                            while( $row = $result ->fetch_array(MYSQLI_ASSOC))
-                                            {
-                                                $nombre =($row["Nombre"]);
-                                                $nomenclatura = $row["u_id"];
-                                                echo ("<option value=$nomenclatura>$nombre</option>");
-                                            }
-
-                                            echo ("</select>");
-                                        ?>
-                                    </div>
-                                    <div class="col-md-2 col-lg-2">
+                                        $result_pl = $mysqli->query("SELECT veh_id, placas FROM arg_vehiculos WHERE org_id = ".$_SESSION['org_id']);
+                                        while( $row = $result_pl ->fetch_array(MYSQLI_ASSOC)) {
+                                            $nombre =($row["placas"]);
+                                            $nomenclatura = $row["veh_id"];
+                                            echo ("<option value=$nomenclatura>$nombre</option>");
+                                        }          
+                                        echo ("</select><br /><br />");
+                                    ?>                 
+                                    <a href='' name="idsele" class="btn btn-primary" data-toggle="modal" data-target="#ModalVeh"  class="sepV_a" title="Nuevo vehículo">+ </a>
+                                </div>
+                            </span>
+                        </div>
+                        <div class="col-md-11 col-lg-11 derecha" id="placas_dat"></div>
+                        <br /> <br /> <br /><br />
+                        <div class="container" class="col-md-10 col-lg-10">
+                            <div class="col-md-7 col-lg-7 bg-info text-white text-center">
+                                <label>LISTA HERRAMIENTAS</label>
+                                <input type="botton" class="btn btn-warning" name="agregar_herr" id="agregar_herr" onclick="agregarFilaHerr();" value="+ Agregar Herramienta" readonly />
+                            </div>       
+                            <br />
+                            <br /> 
+                        </div>
+                        <br/> 
+                        <div class="container" class="col-md-5 col-lg-5">                                   
+                            <div class="col-md-2 col-lg-2"> 
+                                <input name="cantidad0" id="cantidad0" placeholder="Cantidad" class = "form-control" value="" enabled />                                             
+                            </div>
+                            <div class="col-md-1 col-lg-1"> 
+                            </div>
+                            <div class="col-md-3 col-lg-3">
+                                <span class="input-group-btn" >
+                                    <div class="input-group">                            	
                                         <?php 
-                                            $empleadotop = $_GET['empleado'] ?? '';
-                                            if ($empleadotop == "")
-                                                $emptop = "Responsable visita";
+                                            $herrtop = $_GET['herramientas'];
+                                            if ($herrtop == "")
+                                                $herrtop = "Herramientas...";
 
-                                            echo ("<select name=\"empleado_visita\" id=\"empleado_visita\" class=\"form-control\" > ");        
-                                            echo ("<option value=$nomtop>$emptop</option>");
+                                            echo ("<select name=\"busqueda_herr0\" id=\"busqueda_herr0\" class=\"form-control\" onchange=\"Showherr();\" > ");
+                                            echo ("<option value='0'>$herrtop</option>");   
 
-                                            $result = $mysqli->query("SELECT u_id, Nombre FROM arg_usuarios WHERE division = 'empleado' AND activo = 1 ORDER BY nombre") or die(mysqli_error($mysqli));
-                                            while( $row = $result ->fetch_array(MYSQLI_ASSOC))
-                                            {
-                                                $nombre =($row["Nombre"]);
-                                                $nomenclatura = $row["u_id"];
+                                            $result_herr = $mysqli->query("SELECT herr_id, nombre FROM arg_herramientas WHERE org_id =".$_SESSION['org_id']." AND activo = 1");
+                                            while( $row = $result_herr ->fetch_array(MYSQLI_ASSOC)) {
+                                                $nombre =($row["nombre"]);
+                                                $nomenclatura = $row["herr_id"];                                              
                                                 echo ("<option value=$nomenclatura>$nombre</option>");
                                             }          
 
-                                            echo ("</select>");
+                                            echo ("</select><br/>");
                                         ?>
+                                        <a href='' name="herr" class="btn btn-primary" data-toggle="modal" data-target="#Modalherr"  class="sepV_a" title="Nueva Herramienta">+ </a>
                                     </div>
-                                </div>
-                                <br /> 
-                                <br />
-                                <div class="container">                              
-                                    <?php 
-                                        echo ("<div> 
-                                                    <div class=\"maintable\">
-                                                        <table class=\"sortable\"id=\"tbarea\"cellspacing=\0;>
-                                                            <div><body></div>"); 
-                                        echo ("<div><tr>");
-                                        echo ("</tr></div>"); 
-                                        echo("</body></table></div></div> ");
-                                    ?>
-                                </div>
-                                <div class="col-md-2 col-lg-2">                            
-                                    <label for="fecha_inicial"><b>Visita Desde:</b></label><br/>
-                                    <?php   
-                                        $fecha_minima_val = date('Y-m-j');
-                                        $nuevafecha = strtotime ( '+0 day' , strtotime ( $fecha_minima_val ) ) ;
-                                        $nuevafecha = date ( 'Y-m-d' , $nuevafecha );
-                                    ?>
-                                    <input type="date" name="fecha_inicial" class="form-control" id="fecha_inicial" onchange="ValidaVigencias(<?php echo $u_id;?>);" min="<?php echo $nuevafecha;?>"/>
-                                </div>
-                                <div class="col-md-2 col-lg-2">
-                                    <label for="fecha_final"><b>Hasta:</b></label><br/>
-                                    <input type="date" name="fecha_final" class="form-control" id="fecha_final" onchange="ValidaVigenciasFin(<?php echo $u_id;?>);" min="<?php echo $nuevafecha;?>"/>                                
-                                </div>
-                                <br/>
-                                <br/>                                                        
-                                <br />   
-                                <br /> 
-                                <br />
-                                <br />                               
-                                <div class="container" class="col-md-12 col-lg-12">
-                                    <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-                                        <label>DATOS DE LOS VISITANTES</label>
-
-                                            <input type="button" class="btn btn-warning" name="agregar" id="agregar" onclick="agregarFila(<?echo $cont_click=$cont_click+1?>);" value="+ Agregar Visitante" /> 
-
-                                    </div>
-                                </div>
-                                <?php 
-                                    echo ("<div class=\"maintable\">
-                                        <table class=\"sortable\"id=\"tbdoctor\"cellspacing=\0;>
-                                        <body>");
-                                    echo ("<tr>");       
-                                    echo ("<div class=\"col-md-2 col-lg-2\">");
-                                    echo ("<label for=\"usuario_id\">Nombre<label>");
-                                    echo ("<input type=\"usuario_id\" name=\"usuario_id\" placeholder=\"Nombre\" class=\"form-control\" value=\"".$_SESSION['nombre']."\" id=\"usuario_id\" readonly /></div>");
-                                    echo ("<div class=\"col-md-2 col-lg-2\">");
-                                    echo ("<label for=\"usuario_id\">IMSS/Gastos MM<label>");
-                                    echo ("<input type=\"seguro\" name=\"seguro\" placeholder=\"IMSS-Gastos MM\" class=\"form-control\" value=\"".$_SESSION['seguro']."\" id=\"seguro\" readonly/></div>");
-                                    echo ("<div class=\"col-md-2 col-lg-2\">");
-                                    echo ("<label for=\"usuario_id\">INE<label>");
-                                    echo ("<input type=\"ine\" name=\"ine\" placeholder=\"INE\" class=\"form-control\" value=\"".$ine."\" id=\"ine\" readonly /></div><br/>");
-                                    echo ("</tr>");    
-                                    echo ("</br>");    
-                                    echo ("</br>"); 
-                                    echo ("</br>");         
-                                    echo("</body></table></div> <br/>");
-                                ?>
-                                <div class="container" class="col-md-10 col-lg-10">
-                                    <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-                                        <label>DATOS DEL VEHÍCULO</label>
-                                    </div>                                        
-                                    <br/>
-                                </div> 
-                                <div class="col-md-2 col-lg-2">     
-                                    <label for="licencia_id">Licencia: </label>                           
-                                    <input type="licencia_id" name="licencia_id" placeholder="Licencia" value="<?php echo $licencia;?>" class="form-control" id="licencia_id" readonly />
-                                </div>
-                                <div class="col-md-1 col-lg-1"> 
-                                </div>
-                                <div id="content" class="col-lg-3">
-                                    <label for="placas">Placas: </label>
-                                    <span class="input-group-btn" >
-                                        <div class="input-group">                            
-                                            <?php 
-                                                $placastop = $_GET['placas'];
-                                                if ($placastop == ""){
-                                                    $nomtop = "0";
-                                                    $placastop = "Seleccione un vehículo...";
-                                                }
-
-                                                echo ("<select name=\"placas\" id=\"placas\" class=\"form-control\" onchange=\"ShowSelected();\" > ");
-                                                echo ("<option value=$nomtop>$placastop</option>");
-
-                                                $result_pl = $mysqli->query("SELECT veh_id, placas FROM arg_vehiculos WHERE org_id = ".$_SESSION['org_id']);
-                                                while( $row = $result_pl ->fetch_array(MYSQLI_ASSOC)) {
-                                                    $nombre =($row["placas"]);
-                                                    $nomenclatura = $row["veh_id"];
-                                                    echo ("<option value=$nomenclatura>$nombre</option>");
-                                                }          
-                                                echo ("</select><br /><br />");
-                                            ?>                 
-                                            <a href='' name="idsele" class="btn btn-primary" data-toggle="modal" data-target="#ModalVeh"  class="sepV_a" title="Nuevo vehículo">+ </a>
-                                        </div>
-                                    </span>
-                                </div>
-                                <div class="col-md-11 col-lg-11 derecha" id="placas_dat"></div>
-                                <br /> <br /> <br /><br />
-                                <div class="container" class="col-md-10 col-lg-10">
-                                    <div class="col-md-7 col-lg-7 bg-info text-white text-center">
-                                        <label>LISTA HERRAMIENTAS</label>
-                                        <input type="botton" class="btn btn-warning" name="agregar_herr" id="agregar_herr" onclick="agregarFilaHerr();" value="+ Agregar Herramienta" readonly />
-                                    </div>       
-                                    <br />
-                                    <br /> 
-                                </div>
-                                <br/> 
-                                <div class="container" class="col-md-5 col-lg-5">                                   
-                                    <div class="col-md-2 col-lg-2"> 
-                                        <input name="cantidad0" id="cantidad0" placeholder="Cantidad" class = "form-control" value="" enabled />                                             
-                                    </div>
-                                    <div class="col-md-1 col-lg-1"> 
-                                    </div>
-                                    <div class="col-md-3 col-lg-3">
-                                        <span class="input-group-btn" >
-                                            <div class="input-group">                            	
-                                                <?php 
-                                                    $herrtop = $_GET['herramientas'];
-                                                    if ($herrtop == "")
-                                                        $herrtop = "Herramientas...";
-
-                                                    echo ("<select name=\"busqueda_herr0\" id=\"busqueda_herr0\" class=\"form-control\" onchange=\"Showherr();\" > ");
-                                                    echo ("<option value=$nomtop>$herrtop</option>");   
-
-                                                    $result_herr = $mysqli->query("SELECT herr_id, nombre FROM arg_herramientas WHERE org_id =".$_SESSION['org_id']." AND activo = 1");
-                                                    while( $row = $result_herr ->fetch_array(MYSQLI_ASSOC)) {
-                                                        $nombre =($row["nombre"]);
-                                                        $nomenclatura = $row["herr_id"];                                              
-                                                        echo ("<option value=$nomenclatura>$nombre</option>");
-                                                    }          
-
-                                                    echo ("</select><br/>");
-                                                ?>
-                                                <a href='' name="herr" class="btn btn-primary" data-toggle="modal" data-target="#Modalherr"  class="sepV_a" title="Nueva Herramienta">+ </a>
-
-                                            </span>
-
-                                           	</div>
-
-                            	     </div>    
-
-                                  </div> 
-
-                                  <br/>
-
-                                  <div class="container-fluid">                                
-
-                                        <?echo ("<div class=\"maintable\">
-
-                                            <table class=\"sortable\"id=\"tbherr\"cellspacing=\0;>
-
-                                            <thead>
-
-                                               
-
-                                            </thead>
-
-                                            <body>"); 
-
-                                            echo ("<tr>"); 
-
-                                           
-
-                                            echo ("</tr>"); 
-
-                                            echo("</body></table></div> ");
-
-                                            echo ("</br>");
-
-                                        ?>
-
-                                    </div>  
-
-                                    
-
-                           </div>   
-
-                           
-
-                      </div>
-
-                       <div class="container">
-
-                             <div class="col-md-6 col-lg-6">   
-
-                                <br/>
-
-                                <input type="submit" class="btn btn-primary" name="visita" id="visita" value="Registrar Visita" />                            
-
+                                </span>
                             </div>
-
-                        </div>                                 
-
-                                 <? 	
-
+                        </div>    
+                    </div> 
+                    <br/>
+                    <div class="container-fluid">                                
+                        <?php 
+                            echo ("<div class=\"maintable\">
+                                <table class=\"sortable\"id=\"tbherr\"cellspacing=\0;>
+                                <thead>
+                                </thead>
+                                <body>"); 
+                            echo ("<tr>"); 
+                            echo ("</tr>"); 
+                            echo("</body></table></div> ");
+                            echo ("</br>");
+                        ?>
+                    </div> 
+                </div>
+            </div>
+            <div class="container">
+                    <div class="col-md-6 col-lg-6">   
+                    <br/>
+                    <input type="submit" class="btn btn-primary" name="visita" id="visita" value="Registrar Visita" />                            
+                </div>
+            </div>                                 
+            <?php  	
             }
+            ?>  
+        </div> 
 
-             ?>              
-
-                              
-
-                        
-
-               </div> 
-
-               </fieldset>  
-
-            </form> 
-
-          
-
-          </div>
-
-        </div>           
-
-      <?      
-
+    </fieldset>  
+</form> 
+</div>
+</div>           
+<?php       
     }
-
-  
-
-  //}
-
-?>                    
-
-    
-
+?>
 <script type="text/javascript" src="js/jquery.min.js"></script>
