@@ -1,4 +1,9 @@
 {
+    "autoload": {
+        "psr-4": {
+            "App\\": ""
+        }
+    },
     "require": {
         "dompdf/dompdf": "^3.1",
         "phpmailer/phpmailer": "^7.2"

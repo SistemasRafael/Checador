@@ -21,7 +21,10 @@
   }
 </style>
 <?php
-include "config/Env.php";
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use App\Utilities\Env;
+
 Env::load(dirname(__DIR__) . '/.env');
 
 if (($_SESSION['LoggedIn']) <> '') {

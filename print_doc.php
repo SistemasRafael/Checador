@@ -1,10 +1,10 @@
 <?php
 require_once __DIR__ . '/vendor/autoload.php';
-
 include "config/config.php";
-include "repositories/DocumentVisitRepository.php";
-include "pdf/templates/DocumentVisitTemplate.php";
-include "pdf/generators/PdfGenerator.php";
+
+use App\Repositories\DocumentVisitRepository;
+use App\DesignPatterns\Pdf\Templates\DocumentVisitTemplate;
+use App\DesignPatterns\Pdf\Generators\PdfGenerator;
 
 $trn_id_rel = $_GET['trn_id'];
 

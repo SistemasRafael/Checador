@@ -1,18 +1,19 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../config/Env.php';
 
-require_once __DIR__ . '/../design-patterns/mail/MailService.php';
-require_once __DIR__ . '/../design-patterns/mail/providers/PHPMailerProvider.php';
-require_once __DIR__ . '/../design-patterns/mail/templates/VisitRequestEmail.php';
-require_once __DIR__ . '/../models/Visit.php';
-require_once __DIR__ . '/../repositories/VisitRepository.php';
-require_once __DIR__ . '/../services/VisitService.php';
-require_once __DIR__ . '/../enums/ActividadEnum.php';
-require_once __DIR__ . '/../design-patterns/validation/FormValidator.php';
-require_once __DIR__ . '/../design-patterns/validation/rules/ValidDateRule.php';
-require_once __DIR__ . '/../design-patterns/validation/rules/RequiredFieldNumberRule.php';
-require_once __DIR__ . '/../design-patterns/validation/rules/ConditionalRequiredFieldRule.php';
+use App\Utilities\Env;
+use App\DesignPatterns\Mail\MailService;
+use App\DesignPatterns\Mail\Providers\PHPMailerProvider;
+use App\DesignPatterns\Mail\Templates\VisitRequestEmail;
+use App\Models\Visit;
+use App\Repositories\VisitRepository; 
+use App\Services\VisitService;
+use App\Enums\ActividadEnum;
+use App\DesignPatterns\Validation\FormValidator;
+use App\DesignPatterns\Validation\Rules\ValidDateRule;
+use App\DesignPatterns\Validation\Rules\RequiredFieldNumberRule;
+use App\DesignPatterns\Validation\Rules\ConditionalRequiredFieldRule;
+use App\DesignPatterns\Mail\DTO\EmailMessageDTO;
 
 $u_id = $_SESSION['u_id'];
 $trn_id_rel = $_POST['trn_id'] ?? '';
@@ -34,7 +35,7 @@ function enviar(string $atiende_correo,
         'app_url' => Env::get('APP_URL')."print_doc.php?trn_id={$trn_id}"
     ]);
 
-    $mailService = new MailService(new PHPMailerProvider());
+    $mailService = new MailService(new PHPMailerProvider()); 
 
     $message = new EmailMessageDTO(
         to: [$atiende_correo],
@@ -1100,7 +1101,7 @@ if (isset($_POST['visita'])) {
         'visit_reason' => $visitPurpose,
         'visit_group' => $visitGroup 
     ]);
-
+    
     if (!empty($errors)) {
         $errorsJson = json_encode(
             $errors,
@@ -1112,7 +1113,7 @@ if (isset($_POST['visita'])) {
             showErrorMessage(errors[0]);
         </script>";
     }
-    else {   
+    else {
         $max_trn_id = $mysqli->query("SELECT MAX(trn_id) AS trn_id FROM arg_entradas") or die(mysqli_error($mysqli));
         $max_trn = $max_trn_id ->fetch_array(MYSQLI_ASSOC);
         $trn_id = $max_trn['trn_id'];

@@ -1,5 +1,5 @@
 <?php
-
+namespace App\Utilities;
 class Response
 {
     public static function success(string $message, array $data = []): array

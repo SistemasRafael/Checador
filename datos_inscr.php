@@ -1,11 +1,12 @@
 <?php
-include "config/config.php";
 require_once __DIR__ . '/vendor/autoload.php';
-require_once __DIR__ . '/config/Env.php';
+include "config/config.php";
 
-require_once __DIR__ . '/mail/MailService.php';
-require_once __DIR__ . '/mail/providers/PHPMailerProvider.php';
-require_once __DIR__ . '/mail/templates/SuscriptionDataEmail.php';
+use App\Utilities\Env;
+use App\DesignPatterns\Mail\MailService;
+use App\DesignPatterns\Mail\Providers\PHPMailerProvider;
+use App\DesignPatterns\Mail\Templates\SuscriptionDataEmail;
+use App\DesignPatterns\Mail\DTO\EmailMessageDTO;
 
 $html = '';
 $u_id = $_POST['u_id'];
@@ -27,8 +28,9 @@ if ($existe == 1) {
     $ins = $mysqli->query("SELECT cal_id as cal_id FROM arg_calendario_cursos WHERE unidad_id = ".$unidad_mina." AND fecha = '$y-$m-$dia'");
     $in = $ins->fetch_array(MYSQLI_ASSOC);
     $cal_id = $in['cal_id'];
+    
     $ins2 = $mysqli->query("INSERT INTO arg_calendario_usuarios (trn_id, u_id, cal_id, tipo_induccion, fecha) 
-                            VALUES ($trn_id, $u_id, $cal_id, 1, '$y-$m-$dia')");
+                        VALUES ($trn_id, $u_id, $cal_id, 1, '$y-$m-$dia')");
 } 
 else {
     $max_trn_id = $mysqli->query("SELECT MAX(cal_id) AS cal_id FROM arg_calendario_cursos") or die(mysqli_error($mysqli));

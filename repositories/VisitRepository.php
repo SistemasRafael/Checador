@@ -1,5 +1,9 @@
 <?php
-include "utilities/Response.php";
+namespace App\Repositories;
+
+use App\Utilities\Response;
+use App\Models\Visit;
+use mysqli;
 
 class VisitRepository
 {

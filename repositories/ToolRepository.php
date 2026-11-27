@@ -1,4 +1,7 @@
 <?php
+namespace App\Repositories;
+
+use mysqli;
 
 class ToolRepository
 {

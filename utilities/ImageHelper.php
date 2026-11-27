@@ -1,6 +1,7 @@
-
 <?php
+namespace App\Utilities;
 
+use Exception;
 class ImageHelper
 {
     public static function getCompanyIconPath(): string

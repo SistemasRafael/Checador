@@ -1,4 +1,8 @@
 <?php
+namespace App\Repositories;
+
+use Exception;
+use mysqli;
 
 class SubscribedUserRepository
 {
@@ -6,7 +10,9 @@ class SubscribedUserRepository
 
     public function __construct(mysqli $mysqli)
     {
+        echo 'test6.2';
         $this->mysqli = $mysqli;
+        echo 'test6.3';
     }
     
     public function getCursosProveedor(

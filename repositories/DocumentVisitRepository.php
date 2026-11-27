@@ -1,4 +1,8 @@
 <?php
+namespace App\Repositories;
+
+use Exception;
+use mysqli;
 
 class DocumentVisitRepository
 {

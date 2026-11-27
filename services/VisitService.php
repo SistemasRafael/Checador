@@ -1,4 +1,9 @@
 <?php
+namespace App\Services;
+
+use App\Repositories\VisitRepository;
+use App\Models\Visit;
+use App\Utilities\Response;
 
 class VisitService
 {
