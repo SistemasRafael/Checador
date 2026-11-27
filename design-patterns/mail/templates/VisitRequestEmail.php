@@ -8,7 +8,7 @@ class VisitRequestEmail extends EmailTemplate
     {
         parent::__construct($data);
         $this->viewsPath = __DIR__ . '/../views/visit-request/';
-        $this->cssPath = __DIR__ . '/../Assets/email.css';
+        $this->cssPath = __DIR__ . '/../Assets/visit-request.css';
     }
 
     public function subject(): string

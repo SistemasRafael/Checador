@@ -2,9 +2,17 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/Env.php';
 
-require_once __DIR__ . '/../mail/MailService.php';
-require_once __DIR__ . '/../mail/providers/PHPMailerProvider.php';
-require_once __DIR__ . '/../mail/templates/VisitRequestEmail.php';
+require_once __DIR__ . '/../design-patterns/mail/MailService.php';
+require_once __DIR__ . '/../design-patterns/mail/providers/PHPMailerProvider.php';
+require_once __DIR__ . '/../design-patterns/mail/templates/VisitRequestEmail.php';
+require_once __DIR__ . '/../models/Visit.php';
+require_once __DIR__ . '/../repositories/VisitRepository.php';
+require_once __DIR__ . '/../services/VisitService.php';
+require_once __DIR__ . '/../enums/ActividadEnum.php';
+require_once __DIR__ . '/../design-patterns/validation/FormValidator.php';
+require_once __DIR__ . '/../design-patterns/validation/rules/ValidDateRule.php';
+require_once __DIR__ . '/../design-patterns/validation/rules/RequiredFieldNumberRule.php';
+require_once __DIR__ . '/../design-patterns/validation/rules/ConditionalRequiredFieldRule.php';
 
 $u_id = $_SESSION['u_id'];
 $trn_id_rel = $_POST['trn_id'] ?? '';
@@ -33,7 +41,8 @@ function enviar(string $atiende_correo,
         subject: $template->subject(),
         body:  $template->render(),
         cc: [
-            'bitacora@heliostarmetals.com'
+            'bitacora@heliostarmetals.com',
+            'rafael.flores@heliostarmetals.com'
         ]
     );
 
@@ -288,7 +297,7 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
     var count_click2 = 0;
     var count_click4 = 0;
     var count_click5 = 0;
-    let visitantes = [];
+    var visitantes = [];
 
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('#AddVisitors input').forEach(control => {
@@ -332,35 +341,21 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
         const archivoNss = document.getElementById("archivo_nss_visitante").files[0];
 
         const visitante = {
-            action: 'guardar',
-            visita_id: 1,
-            nombre: nombre,
+            Indice: (visitantes.length + 1),
+            nombre_completo : nombre,
             ine: ine,
             nss: nss,
-            archivoIne: 'archivoIne',
-            archivoNss: 'archivoNss'
+            archivo_ine: archivoIne?.name,
+            archivo_nss: archivoNss?.name
         };
 
-        $.ajax({
-            url: 'VisitantesController.php',
-            type: 'POST',
-            dataType: 'json',
-            data: visitante
-        })
-        .done(function(respuesta){
-            if(respuesta.success) {
-                visitante['visitante_id'] = respuesta.data.id;
-                visitantes.push(visitante);
-                pintarTablaVisitantes();
-                limpiarFormulario();
-            }
-            else {
-                alert(respuesta.message);
-            }
-        })
-        .fail(function(xhr, status, error) {
-            console.error(error);
-        });
+        visitantes.push(visitante);
+        pintarTablaVisitantes();
+        limpiarFormulario();
+        document.getElementById('visitantes_json').value = JSON.stringify(visitantes);
+        document.getElementById('visitantes_json').value = JSON.stringify(visitantes);
+        console.log(document.getElementById('numero-visitantes'));
+        document.getElementById('numero-visitantes').textContent = visitantes.length;
     }
 
     function pintarTablaVisitantes() {
@@ -370,7 +365,7 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
             tbody.innerHTML += `
                 <tr>
                     <td>
-                        <strong>${visitante.nombre}</strong>
+                        <strong>${visitante.nombre_completo}</strong>
                     </td>
                     <td>
                         <span class="badge badge-info">
@@ -384,17 +379,17 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
                     </td>
                     <td>
                         <i class="fa fa-file-pdf-o text-danger"></i>
-                        ${visitante.archivoIne?.name || 'Sin archivo'}
+                        ${visitante.archivo_ine || 'Sin archivo'}
                     </td>
                     <td>
                         <i class="fa fa-file-pdf-o text-danger"></i>
-                        ${visitante.archivoNss?.name || 'Sin archivo'}
+                        ${visitante.archivo_nss || 'Sin archivo'}
                     </td>
                     <td class="text-center">
                         <button
                             type="button"
                             class="btn btn-danger btn-sm"
-                            onclick="eliminarVisitante(${visitante.visitante_id})">
+                            onclick="eliminarVisitante(${visitante.Indice})">
                             <i class="fa fa-trash"></i>
                             Eliminar
                         </button>
@@ -407,29 +402,13 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
     function eliminarVisitante(visitante_id) {
         if (confirm("Desea Eliminar el registro?") == true) {
             const visitante = {
-                action: 'eliminar',
-                visitante_id: visitante_id,
+                visita_grupal_id: visitante_id,
             };
 
-            $.ajax({
-                url: 'VisitantesController.php',
-                type: 'POST',
-                dataType: 'json',
-                data: visitante
-            })
-            .done(function(respuesta){
-                if(respuesta.success) {
-                    const indice = visitantes.findIndex(visitante => visitante.visitante_id === visitante_id);
-                    visitantes.splice(indice, 1);
-                    pintarTablaVisitantes();
-                }
-                else {
-                    alert(respuesta.message);
-                }
-            })
-            .fail(function(xhr, status, error) {
-                console.error(error);
-            });
+            const indice = visitantes.findIndex(visitante => visitante.visitante_id === visitante_id);
+            visitantes.splice(indice, 1);
+            pintarTablaVisitantes();
+            document.getElementById('numero-visitantes').textContent = visitantes.length;
         }
     }
 
@@ -486,8 +465,14 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
         }
     }
 
-    function error_fecha() {
-        alert('Debe seleccionar una fecha para su visita. Por favor reintente.')
+    function showErrorMessage(texto) {
+        alert(texto)
+        var print_dr = '<?php echo "\app.php"?>';                
+        window.location.href = print_dr;
+    }
+
+    function ShouldAddVisit() {
+        alert('Debe seleccionar visitantes para la opcion seleccionada "Visita Grupa".')
         var print_dr = '<?php echo "\app.php"?>';                
         window.location.href = print_dr;
     }
@@ -1071,6 +1056,27 @@ if ($trn_id_rel <> '' || $trn_id_rel > 0) {
 
 $mysqli -> set_charset("utf8");
 
+function GetVisitPurpose(array $post): int {
+    $x = 1;
+    $z = 0;
+    $motivoVista = 0;
+
+    while ($x <> 0) {        
+        $act = 'actividad' . $z;
+        $actividad = (int)($post[$act] ?? '0');
+
+        if ($actividad === 0){
+            $x = 0;
+        }
+        else {
+            $motivoVista = (int)($actividad ?? 0);
+            $z++;
+        }
+    }
+
+    return $motivoVista;
+}
+
 if (isset($_POST['visita'])) { 
     $fecha_ini       = $_POST['fecha_inicial'];
     $fecha_fin       = $_POST['fecha_final'];
@@ -1078,12 +1084,33 @@ if (isset($_POST['visita'])) {
     $empleado_visita = $_POST['empleado'];
     $empleado_responsable = $_POST['empleado_visita'];    
     $placas          = $_POST['placas'];
-    // $cantidad1       = $_POST['cantidad_h'];
     $herr            = $_POST['herr'] ?? [];
     $comentario_vis  = $_POST['comentario_visita'];
+    $visitGroup = json_decode($_POST['visitantes_json'] ?? '[]', true);
+    $visitPurpose = GetVisitPurpose($_POST);
 
-    if ($fecha_ini == '') {
-        echo "<script> error_fecha();</script>";
+    $validator = new FormValidator([
+        new ValidDateRule('fecha_inicial', 'Debes seleccionar una fecha de inicio válida.'),
+        new RequiredFieldNumberRule('visit_reason', 'Debes seleccionar un Motivo de Visita.'),
+        new ConditionalRequiredFieldRule('visit_group', 'visit_reason', 10, 'Debe agregar al menos un visitante.')
+    ]);
+
+    $errors = $validator->validate([
+        'fecha_inicial' => $fecha_ini,
+        'visit_reason' => $visitPurpose,
+        'visit_group' => $visitGroup 
+    ]);
+
+    if (!empty($errors)) {
+        $errorsJson = json_encode(
+            $errors,
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+        );
+
+        echo "<script>
+            const errors = {$errorsJson};
+            showErrorMessage(errors[0]);
+        </script>";
     }
     else {   
         $max_trn_id = $mysqli->query("SELECT MAX(trn_id) AS trn_id FROM arg_entradas") or die(mysqli_error($mysqli));
@@ -1242,6 +1269,7 @@ if (isset($_POST['visita'])) {
                                     LEFT JOIN arg_usuarios ON arg_usuarios.u_id = arg_entradas.usuario_id
                                     WHERE trn_id = ".$trn_id) or die(mysqli_error($mysqli));
         $entrada = $datos_e->fetch_assoc();
+        $folioVisita = $entrada['folio'];
 
         $datos_areas = $mysqli->query("SELECT
                                             ear.area_id, 
@@ -1291,7 +1319,26 @@ if (isset($_POST['visita'])) {
                                             arg_herramientas.marca
                                         FROM `arg_entradas_herramientas` 
                                         LEFT JOIN arg_herramientas ON arg_herramientas.herr_id = arg_entradas_herramientas.herr_id
-                                        WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli));         
+                                        WHERE trn_id_rel = ".$trn_id) or die(mysqli_error($mysqli)); 
+                                        
+        if (!empty($visitGroup) && 
+            $visitPurpose === ActividadEnum::VisitaGrupal->value) {
+            $visits = array_map(fn($item) => new Visit(
+                        visita_grupal_id: 0,
+                        nombre_completo: $item['nombre_completo'],
+                        folio_visita: (int)($folioVisita ?? '0'),
+                        ine: $item['ine'],
+                        nss: $item['nss'],
+                        archivo_ine: $item['archivo_ine'],
+                        archivo_nss: $item['archivo_nss'],
+                        fecha_registro: ''
+                    ),
+                    $visitGroup
+                );
+
+            $visitService = new VisitService(new VisitRepository($mysqli));
+            $visitService->addMultiVisits($visits);
+        }
 ?>
         <div class="container">
             <h3><?php echo ("Folio Visita: ".$entrada['folio']);?></h3>
@@ -1463,6 +1510,7 @@ if (isset($_POST['visita'])) {
                 
 
                 <form method="post" action="app.php" name="Visitaform" id="Visitaform">  
+                    <input type="hidden" id="visitantes_json" name="visitantes_json">
 
                 <fieldset>  
                     <div class="container" class="col-md-12 col-lg-12">
@@ -1477,7 +1525,7 @@ if (isset($_POST['visita'])) {
                                         data-target="#AddVisitors"
                                         title="Agregar visitantes"
                                         style="display:none;">
-                                        Agregar visitantes
+                                        Agregar visitantes <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="numero-visitantes">0</span>
                                     </a>
                             </div>
                             <br/>

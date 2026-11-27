@@ -10,20 +10,13 @@ class VisitRepository
         $this->mysqli = $mysqli;
     }
 
-    public function guardar(
-        int $visita_id,
-        string $nombre,
-        string $ine,
-        string $nss,
-        string $archivoIne,
-        string $archivoNss
-    ) {
+    public function add(Visit $visit) {
 
         $stmt = $this->mysqli->prepare("
-            INSERT INTO visitantes
+            INSERT INTO arg_visita_grupal
             (
-                visita_id,
                 nombre_completo,
+                folio_visita,
                 ine,
                 nss,
                 archivo_ine,
@@ -33,13 +26,13 @@ class VisitRepository
         ");
 
         $stmt->bind_param(
-            "isssss",
-            $visita_id,
-            $nombre,
-            $ine,
-            $nss,
-            $archivoIne,
-            $archivoNss
+            "sissss",
+            $visit->nombre_completo,
+            $visit->folio_visita,
+            $visit->ine,
+            $visit->nss,
+            $visit->archivo_ine,
+            $visit->archivo_nss
         );
 
         if (!$stmt->execute()) {
@@ -52,16 +45,16 @@ class VisitRepository
         );
     }
 
-    public function eliminar(int $visitante_id)
+    public function delete(int $visita_grupal_id)
     {
         $stmt = $this->mysqli->prepare("
-            DELETE FROM visitantes
-            WHERE visitante_id = ?
+            DELETE FROM arg_visita_grupal
+            WHERE visita_grupal_id = ?
         ");
 
         $stmt->bind_param(
             "i",
-            $visitante_id
+            $visita_grupal_id
         );
 
         if (!$stmt->execute()) {
@@ -70,7 +63,7 @@ class VisitRepository
 
         if ($stmt->affected_rows === 0) {
             return Response::error(
-                "No se encontró el visitante con ID {$visitante_id}"
+                "No se encontró el visitante con ID {$visita_grupal_id}"
             );
         }
 

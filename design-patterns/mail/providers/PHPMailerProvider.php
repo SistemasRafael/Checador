@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../contracts/MailProviderInterface.php';
 require_once __DIR__ . '/../dto/EmailMessageDTO.php';
-require_once __DIR__ . '/../../config/Env.php';
+require_once __DIR__ . '/../../../config/Env.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -10,8 +10,8 @@ class PHPMailerProvider implements MailProviderInterface
 {
     public function __construct()
     {
-        $path = dirname(__DIR__) . '/../.env';
-        Env::load(dirname(__DIR__) . '/../.env');
+        $path = dirname(__DIR__) . '/../../.env';
+        Env::load($path);
     }
     
     public function send(EmailMessageDTO $message): bool

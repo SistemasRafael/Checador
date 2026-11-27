@@ -1,6 +1,6 @@
 <?php
 
-include "mail/dto/EmailMessageDTO.php";
+require_once __DIR__ . "/../dto/EmailMessageDTO.php";
 
 interface MailProviderInterface
 {
